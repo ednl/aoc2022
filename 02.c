@@ -21,8 +21,8 @@ static Score judge(const int part, const char hands[2])
     }
     // Compare hands, give score minus 4 (rock=1, papers=2, scissors=3, draw=+3)
     switch ((h1 - h0 + 3) % 3) {
-        case 2: return (Score){h0 + 3, h1 - 3};  // -1: player 0 wins: AC, BA, CB
         case 1: return (Score){h0 - 3, h1 + 3};  // +1: player 1 wins: AB, BC, CA
+        case 2: return (Score){h0 + 3, h1 - 3};  // -1: player 0 wins: AC, BA, CB
     }
     return (Score){h0, h1};  // draw: AA, BB, CC
 }
