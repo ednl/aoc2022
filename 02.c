@@ -28,6 +28,6 @@ int main(void)
             case CZ: s += 6; t += 7; break;  // 1: CC = draw 3+3, 2: CA = win  1+6
         }
     fclose(f);
-    printf("%d %d\n", s, t);  // 11767 13886
+    printf("%d\n%d\n", s, t);  // 11767 13886
     return 0;
 }
