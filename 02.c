@@ -9,22 +9,24 @@ typedef struct {
 
 static Score judge(const int part, const char hands[2])
 {
-    // Translation
-    const char h0 = hands[0] - 'A';  // [A..C] => [0..2]
-    char h1 = hands[1] - 'X';        // [X..Z] => [0..2]
+    // Translation from ABC and XYZ to 0=rock, 1=paper, 2=scissors
+    char h0 = hands[0] - 'A';
+    char h1 = hands[1] - 'X';
+    // Different meaning for part 2
     if (part == 2) {
         switch (h1) {
             case 0: h1 = (h0 + 2) % 3; break;  // X: h1=h0-1 => h1-h0=-1 => player 0 wins
-            case 1: h1 =  h0;          break;  // Y: h1=h0   => h0-h1= 0 => draw
-            case 2: h1 = (h0 + 1) % 3; break;  // Z: h1=h0+1 => h0-h1=+1 => player 1 wins
+            case 1: h1 =  h0;          break;  // Y: h1=h0   => h1-h0= 0 => draw
+            case 2: h1 = (h0 + 1) % 3; break;  // Z: h1=h0+1 => h1-h0=+1 => player 1 wins
         }
     }
-    // Compare hands, give score minus 4 (rock=1, papers=2, scissors=3, draw=+3)
+    // Compare hands, score rock(A)=1, paper(B)=2, scissors(C)=3, draw=+3, win=+6
     switch ((h1 - h0 + 3) % 3) {
-        case 1: return (Score){h0 - 3, h1 + 3};  // +1: player 1 wins: AB, BC, CA
-        case 2: return (Score){h0 + 3, h1 - 3};  // -1: player 0 wins: AC, BA, CB
+        case 0: return (Score){h0 + 4, h1 + 4};  //  0: draw          (AA, BB, CC)
+        case 1: return (Score){h0 + 1, h1 + 7};  // +1: player 1 wins (AB, BC, CA)
+        case 2: return (Score){h0 + 7, h1 + 1};  // -1: player 0 wins (AC, BA, CB)
     }
-    return (Score){h0, h1};  // draw: AA, BB, CC
+    return (Score){0, 0};  // avoid compiler warning, should be unreachable
 }
 
 static void add(Score *s, const Score t)
@@ -53,11 +55,11 @@ int main(void)
     Score score = {0};
     for (i = 0; i < N; ++i)
         add(&score, judge(1, play[i]));
-    printf("Part 1: %d\n", score.p1 + N * 4);  // compensate for score minus 4
+    printf("Part 1: %d\n", score.p1);
 
     score = (Score){0, 0};
     for (i = 0; i < N; ++i)
         add(&score, judge(2, play[i]));
-    printf("Part 2: %d\n", score.p1 + N * 4);  // compensate for score minus 4
+    printf("Part 2: %d\n", score.p1);
     return 0;
 }
