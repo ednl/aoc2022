@@ -7,24 +7,24 @@ typedef struct {
     int p0, p1;
 } Score;
 
+// Score for 2 players where rock(A)=1, paper(B)=2, scissors(C)=3, draw=+3, win=+6
+// but minus 4 everywhere, so: rock(A)=0, paper(B)=1, scissors(C)=2, loss=-3, win=+3
 static Score judge(const int part, const char hands[2])
 {
-    // Translation from ABC and XYZ to 0=rock, 1=paper, 2=scissors
-    char h0 = hands[0] - 'A';
-    char h1 = hands[1] - 'X';
-    // Different meaning for part 2
-    if (part == 2) {
-        switch (h1) {
-            case 0: h1 = (h0 + 2) % 3; break;  // X: h1=h0-1 => h1-h0=-1 => player 0 wins
-            case 1: h1 =  h0;          break;  // Y: h1=h0   => h1-h0= 0 => draw
-            case 2: h1 = (h0 + 1) % 3; break;  // Z: h1=h0+1 => h1-h0=+1 => player 1 wins
+    const char h0 = hands[0] - 'A';  // 0=rock, 1=paper, 2=scissors
+    if (part == 1) {
+        const char h1 = hands[1] - 'X';  // 0=rock, 1=paper, 2=scissors
+        switch ((h1 - h0 + 3) % 3) {
+            case 0: return (Score){h0    , h1    };  // h1-h0= 0: draw    (AA, BB, CC)
+            case 1: return (Score){h0 - 3, h1 + 3};  // h1-h0=+1: h1 wins (AB, BC, CA)
+            case 2: return (Score){h0 + 3, h1 - 3};  // h1-h0=-1: h0 wins (AC, BA, CB)
         }
-    }
-    // Compare hands, score rock(A)=1, paper(B)=2, scissors(C)=3, draw=+3, win=+6
-    switch ((h1 - h0 + 3) % 3) {
-        case 0: return (Score){h0 + 4, h1 + 4};  //  0: draw          (AA, BB, CC)
-        case 1: return (Score){h0 + 1, h1 + 7};  // +1: player 1 wins (AB, BC, CA)
-        case 2: return (Score){h0 + 7, h1 + 1};  // -1: player 0 wins (AC, BA, CB)
+    } else if (part == 2) {
+        switch (hands[1]) {
+            case 'X': return (Score){h0 + 3, (h0 + 2) % 3 - 3};  // X: h0 wins (AC, BA, CB)
+            case 'Y': return (Score){h0    ,  h0             };  // Y: draw    (AA, BB, CC)
+            case 'Z': return (Score){h0 - 3, (h0 + 1) % 3 + 3};  // Z: h1 wins (AB, BC, CA)
+        }
     }
     return (Score){0, 0};  // avoid compiler warning, should be unreachable
 }
@@ -55,11 +55,11 @@ int main(void)
     Score score = {0};
     for (i = 0; i < N; ++i)
         add(&score, judge(1, play[i]));
-    printf("Part 1: %d\n", score.p1);
+    printf("Part 1: %d\n", score.p1 + N * 4);  // compensate for score minus 4
 
     score = (Score){0, 0};
     for (i = 0; i < N; ++i)
         add(&score, judge(2, play[i]));
-    printf("Part 2: %d\n", score.p1);
+    printf("Part 2: %d\n", score.p1 + N * 4);  // compensate for score minus 4
     return 0;
 }
