@@ -1,63 +1,36 @@
-#include <stdio.h>   // fgetc, getline, printf
-#include <stdlib.h>  // calloc, free, qsort
+/* Advent of Code 2022
+ * Day 1: Calorie Counting
+ * https://adventofcode.com/2022/day/1
+ * By: E. Dronkert https://github.com/ednl
+ */
 
-static int desc(const void* p, const void* q)
-{
-    return *(const int*)q - *(const int*)p;  // fails with INT_MIN
-}
+#include <stdio.h>   // fopen, fclose, getline, printf
+#include <stdlib.h>  // atoi, free
 
 int main(void)
 {
-    FILE *f = fopen("input01.txt", "r");
-    if (!f)
-        return 1;
-
-    // Count elves = empty lines + 1
-    size_t N = 1;
-    int c, lf = 0;
-    while ((c = fgetc(f)) != EOF) {
-        if (c == '\n') {
-            if (lf++)
-                N++;
-        } else
-            lf = 0;
-    }
-
-    // Make array for calorie sums
-    int *elf = malloc(N * sizeof *elf);
-    if (elf == NULL)
-        return 2;
-
+    int calories = 0;  // total calories per elf (separated by blank line)
+    int top[3] = {0};  // top 3 elves with most calories
     char *buf = NULL;
-    size_t bufsz = 0, i = 0;
-    ssize_t len = 0;
-    int calories = 0;
-
-    rewind(f);
-    while (len != -1) {
-        len = getline(&buf, &bufsz, f);
-        if (len > 1) {
-            // line with number
+    size_t bufsz;
+    FILE *f = fopen("input01.txt", "r");
+    while (!feof(f))  // extra loop after last line to process last elf
+        if (getline(&buf, &bufsz, f) > 1)  // number on line?
             calories += atoi(buf);
-        } else {
-            // empty line or EOF
-            if (i < N)
-                elf[i++] = calories;
-            calories = 0;
+        else {  // blank line or EOF
+            if (calories > top[0]) {
+                top[2] = top[1];
+                top[1] = top[0];
+                top[0] = calories;
+            } else if (calories > top[1]) {
+                top[2] = top[1];
+                top[1] = calories;
+            } else if (calories > top[2])
+                top[2] = calories;
+            calories = 0;  // reset for next elf
         }
-    }
     fclose(f);
     free(buf);
-
-    if (i != N) {
-        free(elf);
-        return 3;
-    }
-
-    qsort(elf, N, sizeof *elf, desc);
-    printf("Part 1: %d\n", elf[0]);
-    printf("Part 2: %d\n", elf[0] + elf[1] + elf[2]);
-
-    free(elf);
+    printf("%d\n%d\n", top[0], top[0] + top[1] + top[2]);  // 69795 208437
     return 0;
 }
