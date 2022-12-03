@@ -25,9 +25,9 @@ static uint64_t index(const char* compartment, const ssize_t size)
 }
 
 // Get index number of highest priority item (0=error, 1='a', 2='b', ..., 27='A', 28='B', ...)
-static char firstitem(uint64_t mask)
+static int firstitem(uint64_t mask)
 {
-    char bit = 0;
+    int bit = 0;
     while (mask >>= 1)  // does not differentiate between mask=0 and mask=1 but both are errors
         bit++;
     return bit;
