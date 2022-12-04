@@ -9,8 +9,8 @@
 
 int main(void)
 {
+    int a[4], part1 = 0, part2 = 0;
     FILE *f = fopen("input04.txt", "r");
-    int part1 = 0, part2 = 0, a[4];
     while (fscanf(f, "%d-%d,%d-%d", &a[0], &a[1], &a[2], &a[3]) == 4) {
         part1 += (a[0] >= a[2] && a[1] <= a[3]) || (a[0] <= a[2] && a[1] >= a[3]);
         part2 += a[0] <= a[3] && a[1] >= a[2];
