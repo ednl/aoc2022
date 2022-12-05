@@ -1,5 +1,4 @@
-#include <stdio.h>   // fopen, fclose, getline, printf
-#include <stdlib.h>  // free
+#include <stdio.h>   // fopen, fclose, fgets, fscanf, printf
 
 #define LINECOUNT   (8)  // crates are stacked 8 high in initial config
 #define LINEWIDTH  (40)  // 35 chars + \n + \0 + safety margin
