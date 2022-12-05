@@ -76,9 +76,9 @@ int main(void)
     for (int m = 0; m < moves; ++m) {
         int n = move[m].crates, i = move[m].src, j = move[m].dst;
         int k = sp[i] - n;  // start from n crates down on source stack i
+        sp[i] = k;  // remove crates from source stack i
         while (n--)
             stack[j][sp[j]++] = stack[i][k++];
-        sp[i] -= move[m].crates;  // remove crates from source stack
     }
     result(2);
     return 0;
