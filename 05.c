@@ -62,7 +62,7 @@ int main(void)
 {
     int moves = read();
 
-    // Part 1: move crates one by one, from top to top
+    // Part 1: move crates one by one, from top of stack to top of stack
     reset();
     for (int m = 0; m < moves; ++m) {
         int n = move[m].crates, i = move[m].src, j = move[m].dst;
