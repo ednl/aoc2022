@@ -27,7 +27,7 @@ static int input(char **buf)
 //   else if any of the last 3 chars are the same, then skip ahead len - 2 = 2
 //   else if any of the last 4 chars are the same, then skip ahead len - 3 = 1
 //   else start-of-message marker is found (skip=0)
-static int skip(const char *signal, const int len, int start)
+static int skip(const char *signal, const int len, const int start)
 {
     for (int i = 2; i <= len; ++i) {
         char c = signal[start - i];  // compare to char at index [start - 2] to [start - len]
