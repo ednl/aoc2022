@@ -1,3 +1,10 @@
+/**
+ * Advent of Code 2022
+ * Day 5: Supply Stacks
+ * https://adventofcode.com/2022/day/5
+ * By: E. Dronkert https://github.com/ednl
+ */
+
 #include <stdio.h>   // fopen, fclose, fgets, fscanf, printf
 
 #define LINECOUNT   (8)  // crates are stacked 8 high in initial config

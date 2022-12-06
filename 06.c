@@ -1,3 +1,10 @@
+/**
+ * Advent of Code 2022
+ * Day 6: Tuning Trouble
+ * https://adventofcode.com/2022/day/6
+ * By: E. Dronkert https://github.com/ednl
+ */
+
 #include <stdio.h>   // fopen, fclose, getline, printf
 #include <stdlib.h>  // free
 #include <unistd.h>  // isatty, fileno

@@ -1,23 +1,25 @@
+/**
+ * Advent of Code 2022
+ * Day 6: Tuning Trouble, alternative implementation
+ * https://adventofcode.com/2022/day/6
+ * By: E. Dronkert https://github.com/ednl
+ */
+
 #include <stdio.h>
 
 #define N (4095)  // character count of full signal in input file
-static char signal[N + 1];  // make room for string delimiter \0
+static char signal[N + 1];  // size + string delimiter \0
 
 static int find(const int len)
 {
-    static int bin[26] = {0};  // frequency bins for a..z
-    static int prev = 0;       // previous len
-    static int mark = 0;       // remember mark
-    int dup = 0;               // duplicate counter
+    static int bin['z' - 'a' + 1] = {0}, prev = 0, mark = 0;
+    int dup = 0;
     for (int i = 0; i < len - prev; ++i, ++mark)  // extend window to new length
-        if (++bin[signal[mark] - 'a'] == 2)  // 1->2 : duplicate added
-            ++dup;
-    while (dup && mark < N) {
+        dup += ++bin[signal[mark] - 'a'] == 2;    // 1->2 : duplicate added
+    prev = len;                                   // remember for next function call
+    for (; dup && mark < N; ++mark)               // loop until no more duplicates
         dup += (++bin[signal[mark] - 'a'] == 2) - (--bin[signal[mark - len] - 'a'] == 1);
-        ++mark;
-    }
-    prev = len;   // remember for next function call
-    return mark;  // start-of-message
+    return mark;                                  // start-of-message
 }
 
 int main(void)
