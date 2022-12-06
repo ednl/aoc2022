@@ -17,7 +17,7 @@ static int find(const int len)
     for (int i = 0; i < len - prev; ++i, ++mark)  // extend window to new length
         dup += ++bin[signal[mark] - 'a'] == 2;    // 1->2 : duplicate added
     prev = len;                                   // remember len for next function call
-    for (; dup && mark < N; ++mark)               // loop until no more duplicates
+    for (; dup; ++mark)                           // loop until no more duplicates (for sane input)
         dup += (++bin[signal[mark] - 'a'] == 2) - (--bin[signal[mark - len] - 'a'] == 1);
     return mark;                                  // start-of-message marker
 }
