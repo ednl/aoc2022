@@ -32,11 +32,11 @@ int main(void)
         look(    0,     i,  1,  0);
         look(N - 1,     i, -1,  0);
     }
-    int allvisible = 4 * (N - 1);  // edges
+    int visible = 4 * (N - 1);  // edges
     for (int i = 1; i < N - 1; ++i)
         for (int j = 1; j < N - 1; ++j)
-            allvisible += vidi[i][j];
-    printf("Part 1: %d\n", allvisible);  // 1805
+            visible += vidi[i][j];
+    printf("Part 1: %d\n", visible);  // 1805
 
     // Part 2: look out from the inside, check scenic quality (line of sight in all 4 directions)
     int best = 1;
