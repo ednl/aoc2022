@@ -41,7 +41,7 @@ typedef struct _Vec {
 } Vec;
 typedef struct _Move {
     Vec dir;
-    int dist;
+    int len;
 } Move;
 
 static Move move[N];  // translated instructions from input
@@ -165,7 +165,7 @@ static void simulate(const Vec startpos, const int knotcount)
         seen[i] = false;
     visit(startpos);
     for (int i = 0; i < N; ++i) {
-        for (int j = 0; j < move[i].dist; ++j) {
+        for (int j = 0; j < move[i].len; ++j) {
             addto(&knot[0], move[i].dir);
             for (int k = 1; k < knotcount; ++k)
                 follow(k, k == knotcount - 1);
@@ -197,13 +197,13 @@ int main(void)
             case 'U': move[i].dir.y = -1; break;  // up
             case 'D': move[i].dir.y =  1; break;  // down
         }
-        move[i].dist = atoi(&inp[i][2]);  // range [1..19]
+        move[i].len = atoi(&inp[i][2]);  // range [1..19]
     }
 
     // Determine grid dimensions
     Vec pos = (Vec){0, 0}, min = (Vec){0, 0}, max = (Vec){0, 0};
     for (int i = 0; i < N; ++i) {
-        addto(&pos, mult(move[i].dir, move[i].dist));
+        addto(&pos, mult(move[i].dir, move[i].len));
         if (pos.x < min.x) min.x = pos.x;
         if (pos.x > max.x) max.x = pos.x;
         if (pos.y < min.y) min.y = pos.y;
