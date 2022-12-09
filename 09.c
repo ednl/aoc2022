@@ -182,7 +182,7 @@ static void simulate(const Vec startpos, const int knotcount)
     for (int i = 0; i < dim.x * dim.y; ++i)
         seen[i] = false;
     visit(startpos);
-    //
+    // Do the thing
     for (int i = 0; i < N; ++i) {                // for every move instruction
         for (int j = 0; j < move[i].len; ++j) {  // take one step at a time (!!!)
             addto(&knot[0], move[i].dir);        // move the head
