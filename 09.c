@@ -199,6 +199,8 @@ static void simulate(const Vec startpos, const int knotcount)
 
 int main(void)
 {
+    starttimer();
+
 #if !EXAMPLE
     // Read input file
     FILE *f = fopen("input09.txt", "r");
@@ -208,8 +210,6 @@ int main(void)
         fgets((char*)&inp[i], M, f);
     fclose(f);
 #endif
-
-    starttimer();
 
     // Parse input
     for (int i = 0; i < N; ++i) {
@@ -234,15 +234,17 @@ int main(void)
     pos = (Vec){-min.x, -min.y};  // adjusted starting position for zero-based grid
     initgrid(min, max);
 
+    // Part 1
     simulate(pos, K1);
     printf("Part 1: %d\n", countgrid());  // ex1=13, ex2=88, input=6745
 
+    // Part 2
     simulate(pos, K2);
     printf("Part 2: %d\n", countgrid());  // ex1= 1, ex2=36, input=2793
 
-    double t = stoptimer_us();
-    printf("Time: %.1f us\n", t);
-
+    // Clean up
     free(seen);
+    double t = stoptimer_ms();
+    printf("Time: %.2f ms\n", t);
     return 0;
 }
