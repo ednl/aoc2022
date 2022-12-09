@@ -8,6 +8,7 @@
 #include <stdio.h>    // fopen, fclose, fgets, printf
 #include <stdlib.h>   // atoi, abs
 #include <stdbool.h>  // bool, true
+#include "startstoptimer.h"
 
 #define EXAMPLE 0  // 0=use input file, 1=example 1, 2=example 2
 #if EXAMPLE == 1
@@ -208,6 +209,8 @@ int main(void)
     fclose(f);
 #endif
 
+    starttimer();
+
     // Parse input
     for (int i = 0; i < N; ++i) {
         switch (inp[i][0]) {
@@ -236,6 +239,9 @@ int main(void)
 
     simulate(pos, K2);
     printf("Part 2: %d\n", countgrid());  // ex1= 1, ex2=36, input=2793
+
+    double t = stoptimer_us();
+    printf("Time: %.1f us\n", t);
 
     free(seen);
     return 0;
