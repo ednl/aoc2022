@@ -64,7 +64,7 @@ static int sign(int x)
 }
 
 // Element-wise sign (-1,0,+1) of difference between vectors 'a' and 'b', return new vector
-static Vec sgndot(const Vec a, const Vec b)
+static Vec direction(const Vec a, const Vec b)
 {
     return (Vec){sign(a.x - b.x), sign(a.y - b.y)};
 }
@@ -161,34 +161,24 @@ static void showgrid(const Vec startpos, const int knotcount)
     printf("\n");
 }
 
-// Move tail towards head until adjacent, return true if moved
-static bool follow(const Vec head, Vec *const tail, const bool islast)
-{
-    bool hasmoved = false;
-    while (!adjacent(head, *tail)) {
-        addto(tail, sgndot(head, *tail));
-        hasmoved = true;
-        if (islast)
-            visit(*tail);
-    }
-    return hasmoved;
-}
-
 // Complete simulation of 'knotcount' knots starting at location 'startpos'
 static void simulate(const Vec startpos, const int knotcount)
 {
-    // Init
     for (int i = 0; i < knotcount; ++i)
         knot[i] = startpos;
     for (int i = 0; i < dim.x * dim.y; ++i)
         seen[i] = false;
     visit(startpos);
-    // Do the thing
     for (int i = 0; i < N; ++i) {                // for every move instruction
         for (int j = 0; j < move[i].len; ++j) {  // take one step at a time (!!!)
             addto(&knot[0], move[i].dir);        // move the head
-            for (int k = 1; k < knotcount && follow(knot[k - 1], &knot[k], k == knotcount - 1); ++k)
-                ;                                // stop at first knot that hasn't moved
+            for (int k = 1; k < knotcount; ++k) {
+                if (adjacent(knot[k - 1], knot[k]))
+                    break;                       // stop at first knot that hasn't moved
+                addto(&knot[k], direction(knot[k - 1], knot[k]));
+                if (k == knotcount - 1)
+                    visit(knot[k]);
+            }
         }
 #if EXAMPLE
         printf("%s\n", inp[i]);
