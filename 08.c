@@ -1,3 +1,10 @@
+/**
+ * Advent of Code 2022
+ * Day 8: Treetop Tree House
+ * https://adventofcode.com/2022/day/8
+ * By: E. Dronkert https://github.com/ednl
+ */
+
 #include <stdio.h>    // fopen, fclose, fgetc, printf
 #include <stdbool.h>  // bool, true
 

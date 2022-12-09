@@ -1,8 +1,15 @@
+/**
+ * Advent of Code 2022
+ * Day 9: Rope Bridge
+ * https://adventofcode.com/2022/day/9
+ * By: E. Dronkert https://github.com/ednl
+ */
+
 #include <stdio.h>    // fopen, fclose, fgets, printf
 #include <stdlib.h>   // atoi, abs
 #include <stdbool.h>  // bool, true
 
-#define EXAMPLE 0
+#define EXAMPLE 0  // 0=use input file, 1=example 1, 2=example 2
 #if EXAMPLE == 1
 static const char *inp[] = {
     "R 4",
@@ -49,69 +56,75 @@ static Vec knot[K2];  // string of knots (K1 <= K2)
 static bool* seen;    // grid to keep track of visited locations
 static Vec dim;       // grid dimensions
 
-// Returns: x > 0 => +1, x == 0 => 0, x < 0 => -1
+// Sign of x: x > 0 => +1, x == 0 => 0, x < 0 => -1
 static int sign(int x)
 {
     return (x > 0) - (x < 0);
 }
 
+// Element-wise sign (-1,0,+1) of difference between vectors 'a' and 'b', return new vector
+static Vec sgndot(const Vec a, const Vec b)
+{
+    return (Vec){sign(a.x - b.x), sign(a.y - b.y)};
+}
+
+// Element-wise absolute value of difference between vectors 'a' and 'b', return new vector
+static Vec absdot(const Vec a, const Vec b)
+{
+    return (Vec){abs(a.x - b.x), abs(a.y - b.y)};
+}
+
+// Modify vector 'a' by adding vector 'b'
 static void addto(Vec *const a, const Vec b)
 {
     a->x += b.x;
     a->y += b.y;
 }
 
+// Add vectors 'a' and 'b', return new vector
 static Vec add(const Vec a, const Vec b)
 {
     return (Vec){a.x + b.x, a.y + b.y};
 }
 
-static Vec sub(const Vec a, const Vec b)
-{
-    return (Vec){a.x - b.x, a.y - b.y};
-}
-
+// Multiply vector 'a' by scalar 'b', return new vector
 static Vec mult(const Vec a, const int b)
 {
     return (Vec){a.x * b, a.y * b};
 }
 
-static Vec absdot(const Vec a)
-{
-    return (Vec){abs(a.x), abs(a.y)};
-}
-
-static Vec sgndot(const Vec a)
-{
-    return (Vec){sign(a.x), sign(a.y)};
-}
-
+// Are locations 'a' and 'b' adjacent or overlapping?
 static bool adjacent(const Vec a, const Vec b)
 {
     return abs(a.x - b.x) <= 1 && abs(a.y - b.y) <= 1;
 }
 
+// Are locations 'a' and 'b' overlapping?
 static bool equal(const Vec a, const Vec b)
 {
     return a.x == b.x && a.y == b.y;
 }
 
+// Allocate memory for grid spanned by vectors 'a' and 'b'
 static void initgrid(const Vec a, const Vec b)
 {
-    dim = add(absdot(sub(b, a)), (Vec){1, 1});
+    dim = add(absdot(a, b), (Vec){1, 1});  // dim = diff + 1
     seen = malloc((size_t)(dim.x * dim.y) * sizeof *seen);
 }
 
+// Mark location 'a' as visited
 static void visit(const Vec a)
 {
     seen[a.y * dim.x + a.x] = true;
 }
 
+// Has location 'a' been visited?
 static bool visited(const Vec a)
 {
     return seen[a.y * dim.x + a.x];
 }
 
+// Count all visited locations
 static int countgrid(void)
 {
     int sum = 0;
@@ -120,6 +133,7 @@ static int countgrid(void)
     return sum;
 }
 
+// Find index of the first knot with position equal to 'pos', or -1=not found
 static int findknot(const Vec pos, const int knotcount)
 {
     for (int i = 0; i < knotcount; ++i)
@@ -128,6 +142,7 @@ static int findknot(const Vec pos, const int knotcount)
     return -1;
 }
 
+// Draw example grids same way as on adventofcode.com
 static void showgrid(const Vec startpos, const int knotcount)
 {
     for (int y = 0; y < dim.y; ++y) {
@@ -145,30 +160,34 @@ static void showgrid(const Vec startpos, const int knotcount)
     printf("\n");
 }
 
-static void follow(const int index, const bool islast)
+// Move tail towards head until adjacent, return true if moved
+static bool follow(const Vec head, Vec *const tail, const bool islast)
 {
-    const Vec head = knot[index - 1];
-    Vec tail = knot[index];
-    while (!adjacent(head, tail)) {
-        addto(&tail, sgndot(sub(head, tail)));
+    bool hasmoved = false;
+    while (!adjacent(head, *tail)) {
+        addto(tail, sgndot(head, *tail));
+        hasmoved = true;
         if (islast)
-            visit(tail);
+            visit(*tail);
     }
-    knot[index] = tail;
+    return hasmoved;
 }
 
+// Complete simulation of 'knotcount' knots starting at location 'startpos'
 static void simulate(const Vec startpos, const int knotcount)
 {
+    // Init
     for (int i = 0; i < knotcount; ++i)
         knot[i] = startpos;
     for (int i = 0; i < dim.x * dim.y; ++i)
         seen[i] = false;
     visit(startpos);
-    for (int i = 0; i < N; ++i) {
-        for (int j = 0; j < move[i].len; ++j) {
-            addto(&knot[0], move[i].dir);
-            for (int k = 1; k < knotcount; ++k)
-                follow(k, k == knotcount - 1);
+    //
+    for (int i = 0; i < N; ++i) {                // for every move instruction
+        for (int j = 0; j < move[i].len; ++j) {  // take one step at a time (!!!)
+            addto(&knot[0], move[i].dir);        // move the head
+            for (int k = 1; k < knotcount && follow(knot[k - 1], &knot[k], k == knotcount - 1); ++k)
+                ;                                // stop at first knot that hasn't moved
         }
 #if EXAMPLE
         printf("%s\n", inp[i]);
@@ -209,8 +228,8 @@ int main(void)
         if (pos.y < min.y) min.y = pos.y;
         if (pos.y > max.y) max.y = pos.y;
     }
-    initgrid(min, max);
     pos = (Vec){-min.x, -min.y};  // adjusted starting position for zero-based grid
+    initgrid(min, max);
 
     simulate(pos, K1);
     printf("Part 1: %d\n", countgrid());  // ex1=13, ex2=88, input=6745
