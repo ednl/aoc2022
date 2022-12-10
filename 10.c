@@ -6,31 +6,23 @@
  */
 
 #include <stdio.h>   // fopen, fclose, fgetc, fscanf, printf
-#include <stdlib.h>  // abs, div
+#include <stdlib.h>  // abs
 
-#define CLOCK_OFF (20)
+#define CLOCK_OFS (20)
 #define CLOCK_MOD (40)
-#define CLOCK_Q1   (1)
-#define CLOCK_Q2   (6)
 #define VERT       (6)
 #define HORZ      (40)
-#define PIXELS (VERT * HORZ)
 
-static int cycle = CLOCK_OFF, regX = 1, sigsum = 0, pixel = 0;
+static int cycle = CLOCK_OFS, regX = 1, sigsum = 0, pixel = 0;
 
 static void tick(void)
 {
-    ++cycle;
-    div_t poi = div(cycle, CLOCK_MOD);
-    if (!poi.rem && poi.quot >= CLOCK_Q1 && poi.quot <= CLOCK_Q2)
-        sigsum += (cycle - CLOCK_OFF) * regX;  // for cycle=[20,60,100,140,180,220]
-    div_t beam = div(pixel, HORZ);
-    if (beam.quot < VERT) {
-        if (!beam.rem)
-            printf("\n");
-        printf("%c", abs(beam.rem - regX) <= 1 ? '#' : '.');
-    }
-    ++pixel;
+    if (!(++cycle % CLOCK_MOD))
+        sigsum += (cycle - CLOCK_OFS) * regX;  // for cycle=[20,60,100,140,180,220]
+    int beam = pixel++ % HORZ;
+    if (!beam)
+        printf("\n");
+    printf("%c", abs(beam - regX) <= 1 ? '#' : '.');
 }
 
 int main(void)
@@ -38,17 +30,13 @@ int main(void)
     FILE *f = fopen("input10.txt", "r");  // or: example10.txt
     if (!f)
         return 1;
-    int a;
+    int add;
     char buf[8];
-    while (pixel < PIXELS && !feof(f)) {
-        tick();
-        switch (fgetc(f)) {
-            case 'n': fscanf(f, "%s ", buf); break;
-            case 'a':
-                tick();
-                if (fscanf(f, "%s %d ", buf, &a) == 2)
-                    regX += a;
-                break;
+    while (pixel < VERT * HORZ && !feof(f)) {
+        tick();  // 1 cycle for all instructions
+        if (fscanf(f, "%s ", buf) == 1 && buf[0] == 'a' && fscanf(f, "%d ", &add) == 1) {
+            tick();  // 1 more cycle for addx
+            regX += add;
         }
     }
     fclose(f);
