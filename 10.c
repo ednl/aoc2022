@@ -8,19 +8,28 @@
 #include <stdio.h>   // fopen, fclose, fgetc, fscanf, printf
 #include <stdlib.h>  // abs, div
 
-#define VERT  (6)
-#define HORZ (40)
+#define SIG_OFF (20)
+#define SIG_MOD (40)
+#define SIG_Q1   (1)
+#define SIG_Q2   (6)
+#define VERT     (6)
+#define HORZ    (40)
 #define PIXELS (VERT * HORZ)
-static char screen[VERT][HORZ];
 
 static void tick(int *const cycle, const int X, int *const sigsum, int *const pixel)
 {
     ++*cycle;
-    if ((*cycle + 20) % 40 == 0)  // 20th, 60th, 100th, 140th, 180th, and 220th cycles
+    // Part 1
+    div_t dial = div(*cycle + SIG_OFF, SIG_MOD);  // 20th, 60th, 100th, 140th, 180th, and 220th cycles
+    if (!dial.rem && dial.quot >= SIG_Q1 && dial.quot <= SIG_Q2)
         *sigsum += *cycle * X;
+    // Part 2
     div_t beam = div(*pixel, HORZ);
-    if (beam.quot < VERT)
-        screen[beam.quot][beam.rem] = abs(beam.rem - X) <= 1 ? '#' : '.';
+    if (beam.quot < VERT) {
+        if (!beam.rem)
+            printf("\n");
+        printf("%c", abs(beam.rem - X) <= 1 ? '#' : '.');
+    }
     ++*pixel;
 }
 
@@ -44,11 +53,7 @@ int main(void)
         }
     }
     fclose(f);
-    printf("Part 1: %d\nPart 2:\n", sigsum);  // ex=13140, inp=15020
-    for (int i = 0; i < VERT; ++i) {          // EFUGLPAP
-        for (int j = 0; j < HORZ; ++j)
-            printf("%c", screen[i][j]);
-        printf("\n");
-    }
+    printf("\n\nPart 1: %d\n", sigsum);  // ex=13140, inp=15020
+    // Part 2: EFUGLPAP
     return 0;
 }
