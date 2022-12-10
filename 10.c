@@ -5,7 +5,7 @@
  * By: E. Dronkert https://github.com/ednl
  */
 
-#include <stdio.h>   // fopen, fclose, fgetc, fscanf, printf
+#include <stdio.h>   // fopen, fclose, fscanf, printf
 #include <stdlib.h>  // abs
 
 #define CLOCK_OFS (20)
@@ -18,7 +18,7 @@ static int cycle = CLOCK_OFS, regX = 1, sigsum = 0, pixel = 0;
 static void tick(void)
 {
     if (!(++cycle % CLOCK_MOD))
-        sigsum += (cycle - CLOCK_OFS) * regX;  // for cycle=[20,60,100,140,180,220]
+        sigsum += (cycle - CLOCK_OFS) * regX;  // clock = 20,60,100,140,180,220
     int beam = pixel++ % HORZ;
     if (!beam)
         printf("\n");
@@ -31,14 +31,15 @@ int main(void)
     if (!f)
         return 1;
     int add;
-    char buf[8];
-    while (pixel < VERT * HORZ && !feof(f)) {
-        tick();  // 1 cycle for all instructions
-        if (fscanf(f, "%s ", buf) == 1 && buf[0] == 'a' && fscanf(f, "%d ", &add) == 1) {
-            tick();  // 1 more cycle for addx
-            regX += add;
+    char buf[5];  // opcodes are length 4 + 1 string terminator \0
+    while (pixel < VERT * HORZ && !feof(f))
+        if (fscanf(f, "%4s ", buf) == 1) {  // 4 chars, space or newline
+            tick();  // 1 cycle for every instruction
+            if (buf[0] == 'a' && fscanf(f, "%d ", &add) == 1) {
+                tick();  // 1 more cycle for addx
+                regX += add;
+            }
         }
-    }
     fclose(f);
     printf("\n\nPart 1: %d\n", sigsum);  // ex=13140, inp=15020, Part 2: EFUGLPAP
     return 0;
