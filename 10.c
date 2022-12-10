@@ -27,17 +27,15 @@ static void tick(void)
 
 int main(void)
 {
-    FILE *f = fopen("input10.txt", "r");  // or: example10.txt
-    if (!f)
-        return 1;
     int add;
     char buf[5];  // opcodes are length 4 + 1 string terminator \0
+    FILE *f = fopen("input10.txt", "r");  // or: example10.txt
     while (pixel < VERT * HORZ && !feof(f))
         if (fscanf(f, "%4s ", buf) == 1) {  // 4 chars, space or newline
             tick();  // 1 cycle for every instruction
             if (buf[0] == 'a' && fscanf(f, "%d ", &add) == 1) {
                 tick();  // 1 more cycle for addx
-                regX += add;
+                regX += add;  // only update after complete instruction cycle
             }
         }
     fclose(f);
