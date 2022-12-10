@@ -8,6 +8,7 @@
 #include <stdio.h>    // fopen, fclose, fgets, printf
 #include <stdlib.h>   // atoi, abs
 #include <stdbool.h>  // bool, true
+#include "startstoptimer.h"
 
 #define EXAMPLE 0  // 0=use input file, 1=example 1, 2=example 2
 #if EXAMPLE == 1
@@ -63,7 +64,7 @@ static int sign(int x)
 }
 
 // Element-wise sign (-1,0,+1) of difference between vectors 'a' and 'b', return new vector
-static Vec sgndot(const Vec a, const Vec b)
+static Vec direction(const Vec a, const Vec b)
 {
     return (Vec){sign(a.x - b.x), sign(a.y - b.y)};
 }
@@ -160,34 +161,24 @@ static void showgrid(const Vec startpos, const int knotcount)
     printf("\n");
 }
 
-// Move tail towards head until adjacent, return true if moved
-static bool follow(const Vec head, Vec *const tail, const bool islast)
-{
-    bool hasmoved = false;
-    while (!adjacent(head, *tail)) {
-        addto(tail, sgndot(head, *tail));
-        hasmoved = true;
-        if (islast)
-            visit(*tail);
-    }
-    return hasmoved;
-}
-
 // Complete simulation of 'knotcount' knots starting at location 'startpos'
 static void simulate(const Vec startpos, const int knotcount)
 {
-    // Init
     for (int i = 0; i < knotcount; ++i)
         knot[i] = startpos;
     for (int i = 0; i < dim.x * dim.y; ++i)
         seen[i] = false;
     visit(startpos);
-    // Do the thing
     for (int i = 0; i < N; ++i) {                // for every move instruction
         for (int j = 0; j < move[i].len; ++j) {  // take one step at a time (!!!)
             addto(&knot[0], move[i].dir);        // move the head
-            for (int k = 1; k < knotcount && follow(knot[k - 1], &knot[k], k == knotcount - 1); ++k)
-                ;                                // stop at first knot that hasn't moved
+            for (int k = 1; k < knotcount; ++k) {
+                if (adjacent(knot[k - 1], knot[k]))
+                    break;                       // stop at first knot that hasn't moved
+                addto(&knot[k], direction(knot[k - 1], knot[k]));
+                if (k == knotcount - 1)
+                    visit(knot[k]);
+            }
         }
 #if EXAMPLE
         printf("%s\n", inp[i]);
@@ -198,6 +189,8 @@ static void simulate(const Vec startpos, const int knotcount)
 
 int main(void)
 {
+    starttimer();
+
 #if !EXAMPLE
     // Read input file
     FILE *f = fopen("input09.txt", "r");
@@ -231,12 +224,17 @@ int main(void)
     pos = (Vec){-min.x, -min.y};  // adjusted starting position for zero-based grid
     initgrid(min, max);
 
+    // Part 1
     simulate(pos, K1);
     printf("Part 1: %d\n", countgrid());  // ex1=13, ex2=88, input=6745
 
+    // Part 2
     simulate(pos, K2);
     printf("Part 2: %d\n", countgrid());  // ex1= 1, ex2=36, input=2793
 
+    // Clean up
     free(seen);
+    double t = stoptimer_ms();
+    printf("Time: %.2f ms\n", t);
     return 0;
 }
