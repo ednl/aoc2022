@@ -173,7 +173,7 @@ static int64_t play(int rounds)
     if (M == 4)
         show();  // show final configuration of example
     qsort(arr, (const size_t)M, sizeof(*arr), descending);
-    return arr[0] * arr[1];
+    return (int64_t)arr[0] * arr[1];
 }
 
 int main(void)
