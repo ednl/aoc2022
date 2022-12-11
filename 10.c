@@ -10,7 +10,7 @@
 #include "startstoptimer.h"
 
 #define HALF (20)         // half horizontal scanline width
-#define FULL (HALF << 1)  // horizontal pixels = 40
+#define LINE (HALF << 1)  // horizontal pixels = 40
 
 int main(void)
 {
@@ -19,7 +19,7 @@ int main(void)
     char buf[5];                                  // opcodes and operands are length <= 4, +\0
     int clock = 0, regX = 1, sigsum = 0, beam;    // beam = horizontal position
     while (fscanf(f, "%4s ", buf) == 1) {         // 1 clock tick for every word (so, 2 for addx)
-        if ((beam = clock++ % FULL) == HALF - 1)  // beam 19 => clock 20
+        if ((beam = clock++ % LINE) == HALF - 1)  // beam 19 => clock 20
             sigsum += clock * regX;               // clock = 20,60,100,140,180,220th cycle
         if (!beam)                                // start with blank line
             printf("\n");
