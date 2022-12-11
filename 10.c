@@ -7,38 +7,28 @@
 
 #include <stdio.h>   // fopen, fclose, fscanf, printf
 #include <stdlib.h>  // abs
+#include "startstoptimer.h"
 
-#define CLOCK_OFS (20)
-#define CLOCK_MOD (40)
-#define VERT       (6)
-#define HORZ      (40)
-
-static int cycle = CLOCK_OFS, regX = 1, sigsum = 0, pixel = 0;
-
-static void tick(void)
-{
-    if (!(++cycle % CLOCK_MOD))
-        sigsum += (cycle - CLOCK_OFS) * regX;  // clock = 20,60,100,140,180,220
-    int beam = pixel++ % HORZ;
-    if (!beam)
-        printf("\n");
-    printf("%c", abs(beam - regX) <= 1 ? '#' : '.');
-}
+#define HALF (20)         // half horizontal scanline width
+#define FULL (HALF << 1)  // horizontal pixels = 40
 
 int main(void)
 {
-    int add;
-    char buf[5];  // opcodes are length 4 + 1 string terminator \0
-    FILE *f = fopen("input10.txt", "r");  // or: example10.txt
-    while (pixel < VERT * HORZ && !feof(f))
-        if (fscanf(f, "%4s ", buf) == 1) {  // 4 chars, space or newline
-            tick();  // 1 cycle for every instruction
-            if (buf[0] == 'a' && fscanf(f, "%d ", &add) == 1) {
-                tick();  // 1 more cycle for addx
-                regX += add;  // only update after complete instruction cycle
-            }
-        }
+    starttimer();
+    FILE *f = fopen("input10.txt", "r");      // or: example10.txt
+    char buf[5];                              // opcodes are length 4 + 1 string terminator \0
+    int cycle = HALF, regX = 1, sigsum = 0, pixel = 0, beam;
+    while (fscanf(f, "%4s ", buf) == 1) {
+        if (!(++cycle % FULL))                // 1 tick for every word => noop=1, addx=2
+            sigsum += (cycle - HALF) * regX;  // clock=20,60,100,140,180,220
+        if (!(beam = pixel++ % FULL))         // horizontal position of the pixel beam
+            printf("\n");                     // start with blank line
+        printf("%c", abs(beam - regX) <= 1 ? '#' : ' ');  // part 2: EFUGLPAP
+        if (!(buf[0] & (1 << 6)))             // ch < 64 for numbers (also negative sign)
+            regX += atoi(buf);                // only update after complete instruction cycle
+    }
     fclose(f);
-    printf("\n\nPart 1: %d\n", sigsum);  // ex=13140, inp=15020, Part 2: EFUGLPAP
+    printf("\n\nPart 1: %d\n", sigsum);       // part 1: ex=13140, inp=15020
+    printf("Time: %.0f us\n", stoptimer_us());
     return 0;
 }
