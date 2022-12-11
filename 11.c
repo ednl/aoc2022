@@ -7,41 +7,49 @@
 
 #include <stdio.h>     // fopen, fclose, fscanf, printf
 #include <stdlib.h>    // atoi
-#include <stdbool.h>   // bool, true, false
-#include <stdint.h>    // uint64_t, UINT64_C
-#include <inttypes.h>  // PRIu64
+#include <stdbool.h>   // bool
+#include <stdint.h>    // int64_t
+#include <inttypes.h>  // PRId64
 
-#define MONKEYS    (8)
-#define INI_ITEMS  (8)
-#define ITEMS     (40)
+#define MONKEYS (8)  // max number of monkeys
+#define ITEMS   (8)  // max number of items each monkey has initially
+#define QSIZE  (40)  // max number of items of all monkeys
 
 typedef struct _Input {
-    int size, q[INI_ITEMS];
+    int size, q[ITEMS];
 } Input;
 
 typedef struct _Monkey {
-    int activity;        // number of items inspected
-    int param, mod, op;  // op: 0=add,1=mult,2=square
-    int to[2];           // to[0] = target for test=false, to[1] for test=true
-    int head, tail, size, q[ITEMS];  // queue
+    int id;                    // monkey number
+    int activity;              // number of items inspected
+    int op, param;             // operator: 0=add,1=mult,2=square
+    int test;                  // divisibility test
+    int size, head, tail;      // queue size, insert at head, remove from tail
+    struct _Monkey *yes, *no;  // target monkeys for divisible=yes/no
+    int64_t q[QSIZE];          // queue (circular buffer)
 } Monkey;
 
 static Input data[MONKEYS];
 static Monkey monkey[MONKEYS];
-static int64_t common = 1;
+static int M;           // number of monkeys in input (example=4, input=8)
+static int64_t common;  // example=96577, input=8953560
 
-static int input(const char *const name)
+static void read(const char *const name)
 {
-    int i, n = 0;
+    M = 0;
+    common = 1;
+    int i, m = 0;
     FILE *f = fopen(name, "r");
     while (fscanf(f, "Monkey %d: Starting items:", &i) == 1) {
         Input *const a = data + i;
-        Monkey *const b = monkey + i;
+        a->size = 0;
         int k = ',';
-        while (k == ',' && fscanf(f, " %d", &k) == 1 && a->size < INI_ITEMS) {
+        while (k == ',' && fscanf(f, " %d", &k) == 1 && a->size < ITEMS) {
             a->q[a->size++] = k;
             k = fgetc(f);
         }
+        Monkey *const b = monkey + i;
+        b->id = i;
         char c, buf[4];
         if (fscanf(f, " Operation: new = old %c %3s ", &c, buf) == 2)
             switch (c) {
@@ -57,149 +65,126 @@ static int input(const char *const name)
                         b->op = 2;  // square
                     break;
             }
-        int by, isdiv, notdiv;
+        int test, yes, no;
         if (fscanf(f, " Test: divisible by %d"
             " If true: throw to monkey %d"
-            " If false: throw to monkey %d ", &by, &isdiv, &notdiv) == 3) {
-            b->mod = by;
-            b->to[0] = notdiv;  // not divisible => mod>0 => !(mod)=false => index=0
-            b->to[1] = isdiv;   //  is divisible => mod=0 => !(mod)= true => index=1
+            " If false: throw to monkey %d ", &test, &yes, &no) == 3) {
+            common *= (int64_t)test;  // LCM of all divisibility tests (all prime, so: product)
+            b->test = test;
+            b->yes = monkey + yes;  // pointer to monkey when divisibility test succeeds
+            b->no = monkey + no;    // pointer to monkey when divisibility test fails
         }
-        n++;
+        ++m;
     }
     fclose(f);
-    return n;
+    M = m;  // set global number of monkeys in input
 }
 
-static void reset(const int monkeys)
+static void show(void)
 {
-    for (int i = 0; i < monkeys; ++i) {
-        Input *const a = data + i;
-        Monkey *const b = monkey + i;
-        for (int j = 0; j < a->size; ++j)
-            b->q[j] = a->q[j];
-        b->tail = 0;
-        b->head = b->size = a->size;
-    }
-}
-
-// static int input(const char *const name)
-// {
-//     int i, n = 0;
-//     common = 1;
-//     FILE *f = fopen(name, "r");
-//     while (fscanf(f, "Monkey %d: Starting items:", &i) == 1) {
-//         if (i < 0 || i >= MONKEYS)
-//             break;
-//         Monkey *const a = monkey + i;
-//         a->activity = a->cur = a->len = 0;
-//         int k = ',';
-//         while (k == ',' && fscanf(f, " %d", &k) == 1 && a->len < ITEMS) {
-//             a->q[a->len++] = (uint64_t)k;
-//             k = fgetc(f);
-//         }
-//         if (a->len == ITEMS)
-//             break;
-//         a->ins = a->len;
-//         char c, buf[4];
-//         if (fscanf(f, " Operation: new = old %c %3s ", &c, buf) == 2) {
-//             switch (c) {
-//                 case '+': a->op = 0; break;
-//                 case '*': a->op = buf[0] == 'o' ? 2 : 1; break;
-//             }
-//             a->param = (uint64_t)atoi(buf);
-//         }
-//         size_t factor, isdiv, notdiv;
-//         if (fscanf(f, " Test: divisible by %zu"
-//             " If true: throw to monkey %zu"
-//             " If false: throw to monkey %zu ", &factor, &isdiv, &notdiv) == 3) {
-//             a->mod = factor;
-//             common *= factor;
-//             a->to[0] = notdiv;  // not divisible => mod>0 => !(mod)=false => index=0
-//             a->to[1] = isdiv;   //  is divisible => mod=0 => !(mod)= true => index=1
-//         }
-//         n++;
-//     }
-//     fclose(f);
-//     return n;
-// }
-
-static void show(const int monkeys)
-{
-    for (int i = 0; i < monkeys; ++i) {
+    printf("\n");
+    for (int i = 0; i < M; ++i) {
         Monkey *a = monkey + i;
         printf("%d: ", i);
         switch (a->op) {
-            case 0: printf("+%2"PRIu64, a->param); break;
-            case 1: printf("*%2"PRIu64, a->param); break;
+            case 0: printf("+%2d", a->param); break;
+            case 1: printf("*%2d", a->param); break;
             case 2: printf("^ 2"); break;
         }
-        printf(" /%2"PRIu64"->%zu,%zu (", a->mod, a->to[1], a->to[0]);
-        for (size_t j = 0; j < a->len; ++j) {
+        printf(" /%2d?->%d,%d (", a->test, a->yes->id, a->no->id);
+        for (int j = 0; j < a->size; ++j) {
             if (j)
                 printf(",");
-            printf("%"PRIu64, a->q[(a->cur + j) % ITEMS]);
+            printf("%"PRId64, a->q[(a->tail + j) % QSIZE]);
         }
         printf(")\n");
     }
+    printf("\n");
 }
 
-static void round(const int monkeys, bool part1)
+static int64_t pop(Monkey *const a)
 {
-    for (int i = 0; i < monkeys; ++i) {
-        Monkey *const a = monkey + i;
-        a->activity += a->len;
-        while (a->len) {
-            uint64_t item = a->q[a->cur++];
-            a->cur %= ITEMS;
-            a->len--;
-            switch (a->op) {
-                case 0: item += a->param; break;
-                case 1: item *= a->param; break;
-                case 2: item *= item; break;
-            }
-            if (part1)
-                item /= 3;
-            else
-                item %= common;
-            Monkey *const b = monkey + a->to[!(item % a->mod)];  // is divisible => mod=0 => !(mod)=true => index=1
-            b->q[b->ins++] = item;
-            b->ins %= ITEMS;
-            b->len++;
-        }
-    }
+    int64_t val = a->q[a->tail++];  // remove item from back of the queue
+    a->tail %= QSIZE;               // adjust tail index
+    a->size--;                      // one fewer in queue
+    return val;
 }
 
-// Sort uint64_t array in descending order
+static void push(Monkey *const a, const int64_t val)
+{
+    a->q[a->head++] = val;  // add item to front of the queue
+    a->head %= QSIZE;       // adjust head index
+    a->size++;              // one more in queue
+}
+
+// Sort int array in descending order
 static int descending(const void *a, const void *b)
 {
-    const uint64_t p = *(const uint64_t*)a;
-    const uint64_t q = *(const uint64_t*)b;
+    const int p = *(const int*)a;
+    const int q = *(const int*)b;
     return (p < q) - (q < p);
 }
 
-static uint64_t active(const int monkeys)
+static int64_t play(int rounds)
 {
-    uint64_t arr[MONKEYS];
-    for (int i = 0; i < monkeys; ++i) {
-        arr[i] = monkey[i].activity;
-        printf("Monkey %d inspected items %"PRIu64" times.\n", i, arr[i]);
+    // Reset
+    for (int i = 0; i < M; ++i) {
+        Input *const a = data + i;
+        Monkey *const b = monkey + i;
+        b->activity = b->tail = 0;
+        b->head = b->size = a->size;
+        for (int j = 0; j < a->size; ++j)
+            b->q[j] = a->q[j];
     }
-    qsort(arr, (const size_t)monkeys, sizeof(*arr), descending);
+    // Play all rounds
+    const bool ispart1 = rounds == 20;
+    if (M == 4) {
+        if (ispart1)
+            show();  // show initial configuration of example, but only before part 1
+        else
+            printf("\n");  // extra newline between parts 1 & 2 of example
+    }
+    while (rounds--)
+        for (int i = 0; i < M; ++i) {
+            Monkey *const a = monkey + i;
+            a->activity += a->size;
+            while (a->size) {
+                int64_t item = pop(a);
+                switch (a->op) {
+                    case 0: item += a->param; break;
+                    case 1: item *= a->param; break;
+                    case 2: item *= item; break;
+                }
+                if (ispart1)
+                    item /= 3;       // part 1: worry level is divided by 3
+                else
+                    item %= common;  // found another way to keep my worry levels manageable
+                push(item % a->test ? a->no : a->yes, item);
+            }
+        }
+    // Which 2 monkeys were the most active?
+    int arr[MONKEYS];
+    for (int i = 0; i < M; ++i) {
+        arr[i] = monkey[i].activity;
+        if (M == 4)  // show activity of example
+            printf("Monkey %d inspected items %d times.\n", i, arr[i]);
+    }
+    if (M == 4)
+        show();  // show final configuration of example
+    qsort(arr, (const size_t)M, sizeof(*arr), descending);
     return arr[0] * arr[1];
 }
 
 int main(void)
 {
-    int monkeys = input("input11.txt");
-    show(monkeys);
-    for (int i = 1; i <= 20; ++i)
-        round(monkeys, true);
-    printf("Part 1: %"PRIu64"\n", active(monkeys));  // example=10605, input=118674
+    printf("---------- EXAMPLE ----------\n");
+    read("example11.txt");
+    printf("Part 1: %"PRId64"\n", play(20));     // 10605
+    printf("Part 2: %"PRId64"\n", play(10000));  // 2713310158
 
-    monkeys = input("input11.txt");
-    for (int i = 1; i <= 10000; ++i)
-        round(monkeys, false);
-    printf("Part 2: %"PRIu64"\n", active(monkeys));  // example=2713310158, input=32333418600
+    printf("\n---------- INPUT FILE ----------\n");
+    read("input11.txt");
+    printf("Part 1: %"PRId64"\n", play(20));     // 118674
+    printf("Part 2: %"PRId64"\n", play(10000));  // 32333418600
     return 0;
 }
