@@ -115,14 +115,6 @@ static void show(void)
     printf("\n");
 }
 
-// Sort item array in descending order by activity
-static int mostactive(const void *a, const void *b)
-{
-    const int p = ((const Ring *const)a)->activity;
-    const int q = ((const Ring *const)b)->activity;
-    return (p < q) - (q < p);  // incorrect with INT_MIN
-}
-
 static int64_t play(int rounds)
 {
     // Reset
@@ -165,8 +157,17 @@ static int64_t play(int rounds)
         show();  // show final configuration of example
     }
     // Which 2 monkeys were the most active?
-    qsort(item, (size_t)simcount, sizeof(*item), mostactive);
-    return (int64_t)item[0].activity * item[1].activity;
+    int a0, a1;
+    a0 = a1 = item[0].activity;
+    for (int i = 1; i < simcount; ++i) {
+        const int a2 = item[i].activity;
+        if (a2 > a0) {
+            a1 = a0;
+            a0 = a2;
+        } else if (a2 > a1)
+            a1 = a2;
+    }
+    return (int64_t)a0 * a1;
 }
 
 int main(void)
