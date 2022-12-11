@@ -24,7 +24,7 @@ int main(void)
         if (!beam)                                // start with blank line
             printf("\n");
         printf("%c", abs(beam - regX) <= 1 ? '#' : ' ');  // part 2: EFUGLPAP
-        if (!(buf[0] & (1 << 6)))                 // ascii < 64 for numbers (including negative sign)
+        if (!(buf[0] & (1 << 6)))                 // ascii < 64 for numbers (incl negative sign)
             regX += atoi(buf);                    // only update after complete instruction cycle
     }
     fclose(f);
