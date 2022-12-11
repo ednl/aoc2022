@@ -10,6 +10,7 @@
 #include <stdbool.h>   // bool
 #include <stdint.h>    // int64_t
 #include <inttypes.h>  // PRId64
+#include "startstoptimer.h"
 
 #define MONKEYS (8)  // max number of monkeys
 #define ITEMS   (8)  // max number of items each monkey has initially
@@ -182,9 +183,11 @@ int main(void)
     printf("Part 1: %"PRId64"\n", play(20));     // 10605
     printf("Part 2: %"PRId64"\n", play(10000));  // 2713310158
 
+    starttimer();
     printf("\n---------- INPUT FILE ----------\n");
     read("input11.txt");
     printf("Part 1: %"PRId64"\n", play(20));     // 118674
     printf("Part 2: %"PRId64"\n", play(10000));  // 32333418600
+    printf("Time: %.1f ms\n", stoptimer_ms());
     return 0;
 }
