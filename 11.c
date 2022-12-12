@@ -23,9 +23,9 @@
 #define RING   (32)  // max number of items per monkey (power of 2=fast)
 
 typedef struct {
-    int activity;         // sum of all buffer lengths during play = number of items inspected
-    int len, head, tail;  // content length, insert at head index, remove from tail index
-    int64_t val[RING];    // circular buffer array
+    int activity; // sum of all buffer lengths during play = number of items inspected
+    int len;      // buffer content length
+    int64_t val[RING];  // buffer array
 } Ring;
 
 typedef struct _Monkey {
@@ -58,11 +58,10 @@ static void read(const char *const name)
         while (c == ',') {
             fscanf(f, "%d", &c);
             // push(it, c);   // also increments it->len
-            it->val[it->head++] = c;
+            it->val[it->len++] = c;
             c = fgetc(f);  // either another comma or else newline
             fgetc(f);      // space
         }
-        it->len = it->head;
         for (int i = 0; i < 22; ++i)
             fgetc(f);  // " Operation: new = old "
         fscanf(f, "%c %3s", &m->op, param);
@@ -102,7 +101,7 @@ static void show(void)
         for (int j = 0; j < it->len; ++j) {
             if (j)
                 printf(",");
-            printf("%"PRId64, it->val[(it->tail + j) % RING]);
+            printf("%"PRId64, it->val[j]);
         }
         printf(")\n");
     }
@@ -129,10 +128,8 @@ static int64_t play(int rounds)
         Ring *it = item;
         for (int i = 0; i < monkeys; ++i, ++m, ++it) {
             it->activity += it->len;
-            while (it->len) {
-                int64_t worry = it->val[it->tail++];  // remove item from back of ring buffer
-                it->tail %= RING;                     // adjust tail index
-                it->len--;                            // one fewer in ring buffer
+            for (int j = 0; j < it->len; ++j) {
+                int64_t worry = it->val[j];
                 switch (m->op) {
                     case '+': worry += m->param; break;
                     case '*': worry *= m->param; break;
@@ -143,10 +140,9 @@ static int64_t play(int rounds)
                 else
                     worry /= 3;  // part 1: worry level is divided by 3
                 Ring *const dst = worry % m->test ? m->no : m->yes;
-                dst->val[dst->head++] = worry;  // add item to front of the queue
-                dst->head %= RING;              // adjust head index
-                dst->len++;                     // one more in ring buffer
+                dst->val[dst->len++] = worry;
             }
+            it->len = 0;
         }
     }
     // Display
