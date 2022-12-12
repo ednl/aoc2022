@@ -6,8 +6,8 @@
  *
  * Benchmark with the internal timer on Mac Mini M1 using Bash oneliner:
  *   for((i=0;i<20;++i));do ./a.out>/dev/null;done;for((i=0;i<10;++i));do ./a.out|tail -n1|awk '{print $2}';done
- * gives a runtime for my input file (not the example) of 3.60 ms.
- * Same on a Raspberry Pi 4 with the CPU in performance mode: 15.4 ms.
+ * gives a runtime for my input file (not the example) of 2.17 ms.
+ * Same on a Raspberry Pi 4 with the CPU in performance mode: 13.4 ms.
  *   echo performance | sudo tee /sys/devices/system/cpu/cpufreq/policy0/scaling_governor
  *   /boot/config.txt: arm_boost=1, no overclock
  */
@@ -20,45 +20,44 @@
 #include "startstoptimer.h"
 
 #define MONKEYS (8)  // max number of monkeys
-#define RING   (32)  // max number of items per monkey (power of 2=fast)
-
-typedef struct {
-    int activity; // sum of all buffer lengths during play = number of items inspected
-    int len;      // buffer content length
-    int64_t val[RING];  // buffer array
-} Ring;
+#define ITEMS  (32)  // max number of items per monkey (power of 2=fast)
 
 typedef struct _Monkey {
-    Ring *yes, *no;  // target monkey numbers for divisible=yes/no
-    int param;       // parameter for add or mult
-    int test;        // divisibility test number
-    char op;         // operator: 0=add,1=mult,2=square
+    int64_t item[ITEMS];  // buffer array
+    int len;              // buffer content length
+    int activity;         // sum of all buffer lengths during play = number of items inspected
+    int param;            // parameter for add or mult
+    int test;             // divisibility test number
+    struct _Monkey *yes, *no;  // target monkey numbers for divisible=yes/no
+    char op;              // operator: 0=add,1=mult,2=square
 } Monkey;
 
-static Ring init[MONKEYS], item[MONKEYS];
+static int item[MONKEYS][ITEMS], len[MONKEYS];
 static Monkey monkey[MONKEYS];
-static int monkeys;     // number of monkeys in input (example=4, input=8)
+static int monkeycount;     // number of monkeys in input (example=4, input=8)
 static int64_t common;  // LCM of div-test numbers (example=96577, input=8953560)
 
 static void read(const char *const name)
 {
     // Reset
-    monkeys = 0;
+    monkeycount = 0;
     common = 1;
+    for (int i = 0; i < MONKEYS; ++i) {
+        len[i] = 0;
+        // for (int j = 0; j < ITEMS; ++j)
+        //     item[i][j] = 0;
+    }
     // Parse input
     char param[4];
     Monkey *m = monkey;
-    Ring *it = init;
     FILE *f = fopen(name, "r");
     while (!feof(f)) {
         for (int i = 0; i < 27; ++i)
             fgetc(f);  // "Monkey X:\n  Starting items:"
-        *it = (Ring){0};
         int c = ',';
         while (c == ',') {
             fscanf(f, "%d", &c);
-            // push(it, c);   // also increments it->len
-            it->val[it->len++] = c;
+            item[monkeycount][len[monkeycount]++] = c;
             c = fgetc(f);  // either another comma or else newline
             fgetc(f);      // space
         }
@@ -77,16 +76,15 @@ static void read(const char *const name)
         for (int i = 0; i < 30; ++i)
             fgetc(f);  // "\n    If true: throw to monkey "
         fscanf(f, "%d", &c);
-        m->yes = item + c;
+        m->yes = monkey + c;
         for (int i = 0; i < 31; ++i)
             fgetc(f);  // "\n    If false: throw to monkey "
         fscanf(f, "%d", &c);
-        m->no = item + c;
+        m->no = monkey + c;
         fgetc(f);  // newline
         fgetc(f);  // blank line
-        ++monkeys;
+        ++monkeycount;
         ++m;  // next monkey
-        ++it;   // next item collection
     }
     fclose(f);
 }
@@ -95,13 +93,12 @@ static void show(void)
 {
     printf("\n");
     const Monkey *m = monkey;
-    const Ring *it = item;
-    for (int i = 0; i < monkeys; ++i, ++m, ++it) {
-        printf("%d: %c%2d /%2d?->%d,%d (", i, m->op, m->param, m->test, (int)(m->yes - item), (int)(m->no - item));
-        for (int j = 0; j < it->len; ++j) {
+    for (int i = 0; i < monkeycount; ++i, ++m) {
+        printf("%d: %c%2d /%2d?->%d,%d (", i, m->op, m->param, m->test, (int)(m->yes - monkey), (int)(m->no - monkey));
+        for (int j = 0; j < m->len; ++j) {
             if (j)
                 printf(",");
-            printf("%"PRId64, it->val[j]);
+            printf("%"PRId64, m->item[j]);
         }
         printf(")\n");
     }
@@ -111,10 +108,14 @@ static void show(void)
 static int64_t play(int rounds)
 {
     // Reset
-    for (int i = 0; i < monkeys; ++i)
-        item[i] = init[i];
+    for (int i = 0; i < monkeycount; ++i) {
+        monkey[i].activity = 0;
+        monkey[i].len = len[i];
+        for (int j = 0; j < len[i]; ++j)
+            monkey[i].item[j] = item[i][j];
+    }
     // Display
-    const bool example = monkeys == 4;
+    const bool example = monkeycount == 4;
     const bool part2 = rounds != 20;
     if (example) {
         if (part2)
@@ -125,11 +126,10 @@ static int64_t play(int rounds)
     // Play all rounds
     while (rounds--) {
         Monkey *m = monkey;
-        Ring *it = item;
-        for (int i = 0; i < monkeys; ++i, ++m, ++it) {
-            it->activity += it->len;
-            for (int j = 0; j < it->len; ++j) {
-                int64_t worry = it->val[j];
+        for (int i = 0; i < monkeycount; ++i, ++m) {
+            m->activity += m->len;
+            for (int j = 0; j < m->len; ++j) {
+                int64_t worry = m->item[j];
                 switch (m->op) {
                     case '+': worry += m->param; break;
                     case '*': worry *= m->param; break;
@@ -139,22 +139,22 @@ static int64_t play(int rounds)
                     worry %= common;  // found another way to keep my worry levels manageable
                 else
                     worry /= 3;  // part 1: worry level is divided by 3
-                Ring *const dst = worry % m->test ? m->no : m->yes;
-                dst->val[dst->len++] = worry;
+                Monkey *const dst = worry % m->test ? m->no : m->yes;
+                dst->item[dst->len++] = worry;
             }
-            it->len = 0;
+            m->len = 0;
         }
     }
     // Display
     if (example) {
-        for (int i = 0; i < monkeys; ++i)
-            printf("Monkey %d inspected items %d times.\n", i, item[i].activity);
+        for (int i = 0; i < monkeycount; ++i)
+            printf("Monkey %d inspected items %d times.\n", i, monkey[i].activity);
         show();  // show final configuration of example
     }
     // Which 2 monkeys were the most active?
-    int a0 = item[0].activity, a1 = 0;
-    for (int i = 1; i < monkeys; ++i) {
-        const int a2 = item[i].activity;
+    int a0 = monkey[0].activity, a1 = 0;
+    for (int i = 1; i < monkeycount; ++i) {
+        const int a2 = monkey[i].activity;
         if (a2 > a0) {
             a1 = a0;
             a0 = a2;
