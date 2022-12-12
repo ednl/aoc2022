@@ -6,7 +6,7 @@
  *
  * Benchmark with the internal timer on Mac Mini M1 using Bash oneliner:
  *   for((i=0;i<20;++i));do ./a.out>/dev/null;done;for((i=0;i<10;++i));do ./a.out|tail -n1|awk '{print $2}';done
- * gives a runtime for my input file (not the example) of 2.17 ms.
+ * gives a runtime for my input file (not the example) of 2.09 ms.
  * Same on a Raspberry Pi 4 with the CPU in performance mode: 13.7 ms.
  *   echo performance | sudo tee /sys/devices/system/cpu/cpufreq/policy0/scaling_governor
  *   /boot/config.txt: arm_boost=1, no overclock
@@ -135,9 +135,10 @@ static int64_t play(int rounds)
                     case '*': worry *= m->param; break;
                     case '^': worry *= worry; break;
                 }
-                if (part2)
-                    worry %= common;  // found another way to keep my worry levels manageable
-                else
+                if (part2) {
+                    if (worry >= common)
+                        worry %= common;  // found another way to keep my worry levels manageable
+                } else
                     worry /= 3;  // part 1: worry level is divided by 3
                 Monkey *const dst = worry % m->test ? m->no : m->yes;
                 dst->item[dst->len++] = worry;
