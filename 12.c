@@ -143,6 +143,6 @@ int main(void)
     }
     printf("Part 1: %d\n", bfs(start, end));  // example=31, input=504
     printf("Part 2: %d\n", bfs(end, error));  // example=29, input=500
-    printf("Time: %.0f us", stoptimer_us());  // fastest: Mac Mini M1 = 251 us, Raspberry Pi 4 = ? ms
+    printf("Time: %.0f us\n", stoptimer_us());  // fastest: Mac Mini M1 = 251 us, Raspberry Pi 4 = ? ms
     return 0;
 }
