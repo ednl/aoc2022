@@ -7,7 +7,7 @@
  * Benchmark with the internal timer on Mac Mini M1 using Bash oneliner:
  *   for((i=0;i<20;++i));do ./a.out>/dev/null;done;for((i=0;i<10;++i));do ./a.out|tail -n1|awk '{print $2}';done
  * gives a runtime for my input file (not the example) of 2.09 ms.
- * Same on a Raspberry Pi 4 with the CPU in performance mode: 13.7 ms.
+ * Same on a Raspberry Pi 4 with the CPU in performance mode: 11.6 ms.
  *   echo performance | sudo tee /sys/devices/system/cpu/cpufreq/policy0/scaling_governor
  *   /boot/config.txt: arm_boost=1, no overclock
  */
