@@ -79,8 +79,10 @@ static bool reachable(const Vec pos, char base, bool ispart2)
         return false;
     if (explored[pos.y][pos.x])
         return false;
-    const char climb = elevation(pos) - base;
-    return ispart2 ? climb > -2 : climb < 2;
+    // M1/x86: char=signed, ARM: char=unsigned
+    // so, no sure way of comparing climb = elev - base to +/-2
+    const char elev = elevation(pos);
+    return ispart2 ? elev > base - 2 : elev < base + 2;
 }
 
 static int bfs(const Vec start, const Vec goal)
