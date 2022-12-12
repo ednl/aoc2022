@@ -4,10 +4,10 @@
  * https://adventofcode.com/2022/day/11
  * By: E. Dronkert https://github.com/ednl
  *
- * Benchmark with the internal timer on Mac Mini M1 using Bash oneliner:
+ * Benchmark with the internal timer on a Mac Mini M1 using this Bash oneliner:
  *   for((i=0;i<20;++i));do ./a.out>/dev/null;done;for((i=0;i<10;++i));do ./a.out|tail -n1|awk '{print $2}';done
- * gives a runtime for my input file (not the example) of 2.09 ms.
- * Same on a Raspberry Pi 4 with the CPU in performance mode: 11.6 ms.
+ * gives a shortest runtime for my input file (not the example) of 2.08 ms.
+ * On a Raspberry Pi 4 with the CPU in performance mode: 11.6 ms.
  *   echo performance | sudo tee /sys/devices/system/cpu/cpufreq/policy0/scaling_governor
  *   /boot/config.txt: arm_boost=1, no overclock
  */
@@ -34,8 +34,8 @@ typedef struct _Monkey {
 
 static int item[MONKEYS][ITEMS], len[MONKEYS];
 static Monkey monkey[MONKEYS];
-static int monkeycount;     // number of monkeys in input (example=4, input=8)
-static int64_t common;  // LCM of div-test numbers (example=96577, input=8953560)
+static int monkeycount;  // number of monkeys in input (example=4, input=8)
+static int64_t common;   // LCM of div-test numbers (example=96577, input=8953560)
 
 static void read(const char *const name)
 {
@@ -120,27 +120,45 @@ static int64_t play(int rounds)
         else
             show();  // show initial configuration of example, but only before part 1
     }
-    // Play all rounds
-    while (rounds--) {
-        Monkey *m = monkey;
-        for (int i = 0; i < monkeycount; ++i, ++m) {
-            m->activity += m->len;
-            for (int j = 0; j < m->len; ++j) {
-                int64_t worry = m->item[j];
-                switch (m->op) {
-                    case '+': worry += m->param; break;
-                    case '*': worry *= m->param; break;
-                    case '^': worry *= worry; break;
-                }
-                if (part2) {
+    // Play all rounds (replicate code to avoid branch)
+    if (part2) {
+        for (; rounds; --rounds) {
+            Monkey *m = monkey;
+            for (int i = 0; i < monkeycount; ++i, ++m) {
+                m->activity += m->len;
+                for (int j = 0; j < m->len; ++j) {
+                    int64_t worry = m->item[j];
+                    switch (m->op) {
+                        case '+': worry += m->param; break;
+                        case '*': worry *= m->param; break;
+                        case '^': worry *= worry; break;
+                    }
                     if (worry >= common)
-                        worry %= common;  // found another way to keep my worry levels manageable
-                } else
-                    worry /= 3;  // part 1: worry level is divided by 3
-                Monkey *const dst = worry % m->test ? m->no : m->yes;
-                dst->item[dst->len++] = worry;
+                        worry %= common;  // part 2: found another way to keep my worry levels manageable
+                    Monkey *const dst = worry % m->test ? m->no : m->yes;
+                    dst->item[dst->len++] = worry;
+                }
+                m->len = 0;
             }
-            m->len = 0;
+        }
+    } else {
+        for (; rounds; --rounds) {
+            Monkey *m = monkey;
+            for (int i = 0; i < monkeycount; ++i, ++m) {
+                m->activity += m->len;
+                for (int j = 0; j < m->len; ++j) {
+                    int64_t worry = m->item[j];
+                    switch (m->op) {
+                        case '+': worry += m->param; break;
+                        case '*': worry *= m->param; break;
+                        case '^': worry *= worry; break;
+                    }
+                    worry /= 3;  // part 1: worry level is divided by 3
+                    Monkey *const dst = worry % m->test ? m->no : m->yes;
+                    dst->item[dst->len++] = worry;
+                }
+                m->len = 0;
+            }
         }
     }
     // Display
