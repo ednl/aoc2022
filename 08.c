@@ -7,6 +7,7 @@
 
 #include <stdio.h>    // fopen, fclose, fgetc, printf
 #include <stdbool.h>  // bool, true
+#include "startstoptimer.h"
 
 #define N (99)
 static char tree[N][N];
@@ -24,6 +25,7 @@ static void look(int x0, int y0, int dx, int dy)
 
 int main(void)
 {
+    starttimer();
     FILE *f = fopen("input08.txt", "r");
     for (int i = 0; i < N; ++i) {
         for (int j = 0; j < N; ++j)
@@ -62,5 +64,6 @@ int main(void)
                 best = scenic;
         }
     printf("Part 2: %d\n", best);  // 444528
+    printf("Time: %.0f us\n", stoptimer_us());
     return 0;
 }
