@@ -42,11 +42,8 @@ static void read(const char *const name)
     // Reset
     monkeycount = 0;
     common = 1;
-    for (int i = 0; i < MONKEYS; ++i) {
+    for (int i = 0; i < MONKEYS; ++i)
         len[i] = 0;
-        // for (int j = 0; j < ITEMS; ++j)
-        //     item[i][j] = 0;
-    }
     // Parse input
     char param[4];
     Monkey *m = monkey;
