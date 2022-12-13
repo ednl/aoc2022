@@ -5,7 +5,7 @@
  * By: E. Dronkert https://github.com/ednl
  *
  * Benchmark with the internal timer on a Mac Mini M1 using this Bash oneliner:
- *   for((i=0;i<20;++i));do ./a.out>/dev/null;done;for((i=0;i<10;++i));do ./a.out|tail -n1|awk '{print $2}';done
+ *   for((i=0;i<20;++i));do ./a.out>/dev/null;done;for((i=0;i<10;++i));do ./a.out|tail -n1|awk '{print $2}';done|sort -n|head -n1
  * gives a shortest runtime for my input file (not the example) of 2.08 ms.
  * On a Raspberry Pi 4 with the CPU in performance mode: 11.6 ms.
  *   echo performance | sudo tee /sys/devices/system/cpu/cpufreq/policy0/scaling_governor
