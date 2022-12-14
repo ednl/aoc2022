@@ -78,7 +78,7 @@ static Vec sub(const Vec a, const Vec b)
     return (Vec){a.x - b.x, a.y - b.y};
 }
 
-static int index(const Vec p)
+static int gridindex(const Vec p)
 {
     const Vec q = sub(p, cave.min);
     return q.y * cave.dim.x + q.x;
@@ -86,12 +86,12 @@ static int index(const Vec p)
 
 static bool isfree(const Vec p)
 {
-    return cave.grid[index(p)] == SPACE;
+    return cave.grid[gridindex(p)] == SPACE;
 }
 
 static void place(const Vec p, const int material)
 {
-    cave.grid[index(p)] = material;
+    cave.grid[gridindex(p)] = material;
 }
 
 static void makegrid(Cave* const c)
