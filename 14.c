@@ -243,9 +243,9 @@ static void read(void)
     Vec p0, p1, diff, step;
     while (!feof(f) && fscanf(f, "%d,%d", &p0.x, &p0.y) == 2) {
         while (fgetc(f) == ' ') {        // space or newline
-            place(p0, ROCK);             // start of rock line
             for (int i = 0; i < 3; ++i)  // consume "-> "
                 fgetc(f);
+            place(p0, ROCK);             // start of rock line
             if (fscanf(f, "%d,%d", &p1.x, &p1.y) == 2) {
                 diff = sub(p1, p0);
                 step = signdot(diff);
