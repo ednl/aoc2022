@@ -164,10 +164,9 @@ static bool drop(const int part)
         return false;
 
     Vec p = inlet;
-    while (!offgrid(p) && isfree(p)) {
+    while (!offgrid(p) && isfree(p))
 fallfurther:
         addto(&p, down);
-    }
     if (part == 1 && offgrid(p))
         return false;
 
@@ -241,7 +240,7 @@ static void read(void)
     // Place rock
     rewind(f);
     Vec p0, p1, diff, step;
-    while (!feof(f) && fscanf(f, "%d,%d", &p0.x, &p0.y) == 2) {
+    while (!feof(f) && fscanf(f, "%d,%d", &p0.x, &p0.y) == 2)
         while (fgetc(f) == ' ') {        // space or newline
             for (int i = 0; i < 3; ++i)  // consume "-> "
                 fgetc(f);
@@ -255,7 +254,6 @@ static void read(void)
                 }
             }
         }
-    }
     fclose(f);
 #if EXAMPLE
     show();
