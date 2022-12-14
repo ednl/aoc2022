@@ -7,7 +7,7 @@
  * Benchmark with the internal timer on a Mac Mini M1 using this Bash oneliner:
  *   for((i=0;i<50;++i));do ./a.out>/dev/null;done;for((i=0;i<10;++i));do ./a.out|tail -n1|awk '{print $2}';done|sort -n|head -n1
  * gives a shortest runtime for my input file (not the example) of 5.27 ms.
- * On a Raspberry Pi 4 with the CPU in performance mode: [TBD] ms.
+ * On a Raspberry Pi 4 with the CPU in performance mode: 26.4 ms.
  *   echo performance | sudo tee /sys/devices/system/cpu/cpufreq/policy0/scaling_governor
  *   /boot/config.txt: arm_boost=1, no overclock
  */
@@ -23,7 +23,7 @@
 #define GROW (8)  // min.x: 494->489, max.x: 503->511, so step=8 means 1x grow left + 1x grow right
 #else
 #define NAME "input14.txt"
-#define GROW (68)  // min.x: 492->330, max.x: 602->670, so step=68 means 3x grow left + 1x grow right
+#define GROW (162)  // min.x: 492->330, max.x: 602->670, so step=162 means 1x grow left + 1x grow right
 #endif
 
 #define INLETX (500)
