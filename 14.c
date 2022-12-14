@@ -6,7 +6,7 @@
  *
  * Benchmark with the internal timer on a Mac Mini M1 using this Bash oneliner:
  *   m=50000;for((i=0;i<10000;++i));do t=$(./a.out|tail -n1|awk '{print $2}');((t<m))&&m=$t&&echo $m;done
- * gives a shortest runtime for my input file (not the example) of 5.24 ms.
+ * gives a shortest runtime for my input file (not the example) of 5.08 ms.
  * On a Raspberry Pi 4 with the CPU in performance mode: 26.8 ms.
  *   echo performance | sudo tee /sys/devices/system/cpu/cpufreq/policy0/scaling_governor
  *   /boot/config.txt: arm_boost=1, no overclock
@@ -46,6 +46,7 @@ typedef struct {
 static const Vec inlet = {INLETX,INLETY};
 static const Vec down = {0,1}, left = {-1,0}, right = {2,0}, back = {-1,-1};
 static Cave cave;
+static Vec startpos;
 
 // Sign of x: x > 0 => +1, x == 0 => 0, x < 0 => -1
 static int sign(int x)
@@ -163,7 +164,7 @@ static bool drop(const int part)
     if (!isfree(inlet))
         return false;
 
-    Vec p = inlet;
+    Vec p = startpos;
     while (!offgrid(p) && isfree(p))
 fallfurther:
         addto(&p, down);
@@ -264,9 +265,11 @@ int main(void)
 {
     starttimer();
     read();
+    startpos = inlet;
     printf("Part 1: %d\n", pour(1));  // example=24, input=1330
     removesand();                     // reset cave
     grow(2);                          // add rock row at bottom
+    startpos = inlet;
     printf("Part 2: %d\n", pour(2));  // example=93, input=26139
     free(cave.grid);
     printf("Time: %.0f us\n", stoptimer_us());
