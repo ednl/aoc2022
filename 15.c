@@ -48,16 +48,16 @@ static int range[N], beacons;
 static Vec seg[N];  // segments on line y=Y covered by a sensor from x=.x to x=.y
 static Square square[N];
 
-// Rotate left by 45 deg + dilation
+// Rotate left by 45 deg + dilation by sqrt(2)
 // [[1,1],[-1,1]].(x,y) = (x+y,-x+y) = (x+y,y-x)
 static Vec rotleft(const Vec v)
 {
     return (Vec){v.x + v.y, v.y - v.x};
 }
 
-// Rotate right by 45 deg + contraction
-//    [[1,-1],[1,1]].(x  ,y   )/2 = (x-y    ,x+y    )/2
-// or [[1,-1],[1,1]].(x+y,-x+y)/2 = (x+y+x-y,x+y-x+y)/2 = (2x,2y)/2 = (x,y)
+// Rotate right by 45 deg + contraction by sqrt(2)
+//    [[1,-1],[1,1]].(x  ,y  )/2 = (x-y    ,x+y    )/2
+// or [[1,-1],[1,1]].(x+y,y-x)/2 = (x+y+x-y,x+y-x+y)/2 = (2x,2y)/2 = (x,y)
 static Vec rotright(const Vec v)
 {
     return (Vec){(v.x - v.y) >> 1, (v.x + v.y) >> 1};
@@ -75,7 +75,7 @@ static int sign(int x)
     return (x > 0) - (x < 0);
 }
 
-// Sign element-wise
+// Sign, element-wise
 static Vec signdot(const Vec v)
 {
     return (Vec){sign(v.x), sign(v.y)};
@@ -97,22 +97,6 @@ static bool overlap(const Vec v, const Vec w)
     return v.x <= w.y && v.y >= w.x;
 }
 
-static int cmp_xy(const void* p, const void* q)
-{
-    const Vec s = signdot(sub(*(const Vec*)p, *(const Vec*)q));
-    if (s.x)
-        return s.x;  // first sort on vx < wx
-    return -s.y;     // then sort on vy > wy
-}
-
-static int cmp_yx(const void* p, const void* q)
-{
-    const Vec s = signdot(sub(*(const Vec*)p, *(const Vec*)q));
-    if (s.y)
-        return s.y;  // first sort on vy < wy
-    return s.x;      // then sort on vx < wx
-}
-
 static int cmp_int(const void* p, const void* q)
 {
     return sign(*(const int*)p - *(const int*)q);
@@ -128,10 +112,18 @@ static int dedup_int(int* const arr, const int len)
     int i = 0, j = 0;
     while (j < len) {
         while (++j < len && arr[i] == arr[j]);  // find first a[j] != a[i]
-        if (++i != j && j < len)  // shift a[j] up if skipped
+        if (++i != j && j < len)  // shift a[j] up if skipped (order of conditions is important because of ++)
             arr[i] = arr[j];
     }
     return i;
+}
+
+static int cmp_yx(const void* p, const void* q)
+{
+    const Vec s = signdot(sub(*(const Vec*)p, *(const Vec*)q));
+    if (s.y)
+        return s.y;  // first sort on vy < wy
+    return s.x;      // then sort on vx < wx
 }
 
 // Deduplicate array of position vectors
@@ -144,10 +136,18 @@ static int dedup_vec(Vec* const arr, const int n)
     int i = 0, j = 0;
     while (j < n) {
         while (++j < n && equal(arr[i], arr[j]));  // find first a[j] != a[i]
-        if (++i != j && j < n)  // shift a[j] up if skipped
+        if (++i != j && j < n)  // shift a[j] up if skipped (order of conditions is important because of ++)
             arr[i] = arr[j];
     }
     return i;
+}
+
+static int cmp_xy(const void* p, const void* q)
+{
+    const Vec s = signdot(sub(*(const Vec*)p, *(const Vec*)q));
+    if (s.x)
+        return s.x;  // first sort on vx < wx
+    return -s.y;     // then sort on vy > wy
 }
 
 // Join array of segments where overlapping
@@ -163,7 +163,7 @@ static int join(Vec* const arr, const int n)
             if (arr[i].y < arr[j].y)  // adjust upper limit of range
                 arr[i].y = arr[j].y;
         }
-        if (++i != j && j < n)  // shift a[j] up if skipped
+        if (++i != j && j < n)  // shift a[j] up if skipped (order of conditions is important because of ++)
             arr[i] = arr[j];
     }
     return i;
@@ -174,7 +174,9 @@ static void read(const char* const name)
 {
     int i = 0;
     FILE* f = fopen(name, "r");
-    while (i < N && fscanf(f, "Sensor at x=%d, y=%d: closest beacon is at x=%d, y=%d ", &sensor[i].x, &sensor[i].y, &beacon[i].x, &beacon[i].y) == 4) {
+    while (i < N && fscanf(f,
+        "Sensor at x=%d, y=%d: closest beacon is at x=%d, y=%d ",
+        &sensor[i].x, &sensor[i].y, &beacon[i].x, &beacon[i].y) == 4) {
         range[i] = manh(sensor[i], beacon[i]);
         ++i;
     }
@@ -188,30 +190,22 @@ static int part1(void)
         if ((w = range[i] - abs(sensor[i].y - Y)) >= 0)
             seg[segs++] = (Vec){sensor[i].x - w, sensor[i].x + w};
 
-    // printf("Beacons\n\n");
-    beacons = dedup_vec(beacon, N);
-    // for (int i = 0; i < beacons; ++i)
-    //     printf("%2d: b=("F","F")\n", i + 1, beacon[i].x, beacon[i].y);
-
-    // printf("\nSegments on y=%d covered by sensors\n\n", Y);
     int cannot = 0;
-    segs = join(seg, segs);
-    for (int i = 0; i < segs; ++i) {
+    segs = join(seg, segs);  // also sorted
+    for (int i = 0; i < segs; ++i)
         cannot += seg[i].y - seg[i].x + 1;  // disjoint segment width
-        // printf("%2d: c=("F","F") => cannot="F"\n", i + 1, seg[i].x, seg[i].y, cannot);
-    }
 
-    // printf("\nBeacons on y=%d already covered\n\n", Y);
     int i = 0, j = 0;
-    while (i < beacons && beacon[i].y != Y) // go to first beacon on line y=Y
+    beacons = dedup_vec(beacon, N);  // also sorted
+    // Go to first beacon that is on line y=Y
+    while (i < beacons && beacon[i].y != Y)
         ++i;
-    while (i < beacons && beacon[i].y == Y) {  // look at all beacons on line y=Y
-        while (j < segs && seg[j].y < beacon[i].x)  // go to first segment where beacon can be in
+    // Look at all beacons on line y=Y (it's just 1 beacon in both the example and my input...)
+    while (i < beacons && beacon[i].y == Y) {
+        while (j < segs && seg[j].y < beacon[i].x)  // go to first segment where beacon may be in
             ++j;
-        if (j < segs && seg[j].x <= beacon[i].x) {  // check if beacon is in segment
+        if (j < segs && seg[j].x <= beacon[i].x)  // check if beacon is in segment
             --cannot;
-            // printf("%2d: b=("F","F") in c=("F","F") => cannot="F"\n", ++k, beacon[i].x, beacon[i].y, seg[j].x, seg[j].y, cannot);
-        }
         ++i;
     }
     return cannot;
@@ -222,7 +216,7 @@ static int part1(void)
 //                        |     %   .   .   .
 //   |                    |       %   #   #   r
 // - + - - % % - -        |     %   .   #   #
-//   |   % % .      =>  - + - - - % - # - S - #
+//   |   % % .       =>   + - - - % - # - S - #
 //   | % % . # .          |     %   .   #   #
 //   % % . # # # .        |       %   l   #   #
 //   % . l # S # r        |     %   .   .   .
