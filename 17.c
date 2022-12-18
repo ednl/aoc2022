@@ -13,6 +13,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>    // memcpy
 #include <stdint.h>    // int8_t
 #include <inttypes.h>  // PRId64
 #include <stdbool.h>
@@ -33,9 +34,14 @@
 #define RKNUM  (5)     // number of different falling rocks
 #define RKDIM  (4)     // rocks are 4x4
 #define CHAMW  (7)     // chamber width (=playing field width)
-#define CHAMH  (4096)  // chamber height (=playing field height)
+#define CHAMH  (1024)  // chamber height (=playing field height)
 #define PART1  (2022)  // number of rocks falling down in part 1
 #define PART2  (INT64_C(1000000000000))  // number of rocks falling down in part 2
+
+#define MARGIN (16)              // safety margin from top
+#define MAXH   (CHAMH - MARGIN)  // threshold to start moving down 4096-16=4080
+#define REBASE (MAXH - 64)       // take as new base (floor) 4080-64=4016
+#define BLOCK  (CHAMH - REBASE)  // move lines down 4096-4016=80
 
 typedef struct {
     int8_t row[RKDIM];  // rock is max 4 rows high, mask[0] is leading edge when falling down
@@ -45,6 +51,11 @@ typedef struct {
     int id, n, w, h;   // id (0..RKNUM-1), number of masks (n=CHAMW-w+1), width, height
     Mask mask[CHAMW];  // max 7 different shifted masks
 } Rock;
+
+typedef struct {
+    int64_t dropped, top;
+    int rockindex, jetindex;
+} State;
 
 // Rock shapes as defined by puzzle, but leading edge first (so, "upside down")
 static const char* shape[] = {
@@ -66,7 +77,8 @@ static const char* shape[] = {
 static Rock rock[RKNUM];
 static int8_t jet[JETS];
 static int8_t chamber[CHAMH];
-static int64_t top, floor;
+static int64_t top, base;
+static State state[8192];
 
 static Rock str2rock(const char* const s, const int id)
 {
@@ -136,7 +148,7 @@ static void showline(const int64_t y)
 {
     printf("|");
     for (int8_t bit = (int8_t)(1 << (CHAMW - 1)); bit; bit >>= 1)
-        printf("%c", chamber[y - floor] & bit ? '#' : '.');
+        printf("%c", chamber[y - base] & bit ? '#' : '.');
     printf("|");
 }
 
@@ -154,16 +166,17 @@ static void show(const int64_t first, int64_t last)
         showline(last);
         printf(" y=%"PRId64"\n", last);
     }
-    if (last == floor)
+    if (last == base)
         printf("+-------+\n");
 }
 #endif
 
 static void settle(const Rock* const r, const int x, const int64_t y)
 {
-    int64_t h = y - floor;
+    int64_t h = y - base;
     for (int i = 0; i < r->h; ++i)
         chamber[h++] |= r->mask[x].row[i];
+    h += base;
     if (h > top)
         top = h;
 }
@@ -172,7 +185,7 @@ static bool isfree(const Rock* const r, const int x, const int64_t y)
 {
     if (!r || x < 0 || x >= r->n)
         return false;
-    int64_t h = y - floor;
+    int64_t h = y - base;
     if (h < 0 || h > CHAMH - r->h)
         return false;
     for (int i = 0; i < r->h; ++i)
@@ -186,12 +199,14 @@ int main(void)
     starttimer();
     int rocks = makerocks();
     int jets = read(NAME);
+
 #if EXAMPLE == 1
     printf("rocks=%d jets=%d\n\n", rocks, jets);
 #endif
 
     int rockindex = 0, jetindex = 0;
-    for (int fall = 0; fall < PART1 && top < CHAMH; ++fall) {
+    int64_t dropped = 0;
+    for (; dropped < PART1; ++dropped) {
         const Rock* const r = rock + rockindex;
         int x = X0 + jet[jetindex];  // first move always possible
         if (++jetindex == jets)
@@ -217,11 +232,16 @@ int main(void)
             }
         }
         settle(r, x, y);
+        if (top - base > MAXH) {
+            memcpy(chamber, chamber + REBASE, BLOCK);
+            memset(chamber + BLOCK, 0, REBASE);
+            base += REBASE;
+        }
         if (++rockindex == rocks)
             rockindex = 0;
 #if EXAMPLE == 1
-        if (fall < 10)
-            show(top, floor);
+        if (dropped < 10)
+            show(top, base);
 #endif
     }
     printf("Part 1: %"PRId64"\n", top);  // example=3068 input=3083
