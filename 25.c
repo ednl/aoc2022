@@ -78,6 +78,6 @@ int main(void)
             case  2: printf("2"); break;
         }
     printf("\n");
-    printf("Time: %.0f us\n", stoptimer_us());
+    printf("Time: %.0f us\n", stoptimer_us());  // M1: 41 µs, Pi4: 85 µs
     return 0;
 }
