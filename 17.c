@@ -19,7 +19,7 @@
 #include <stdbool.h>
 #include "startstoptimer.h"
 
-#define EXAMPLE 0
+#define EXAMPLE 1
 #if EXAMPLE == 1
 #define NAME "example17.txt"
 #define JETS (40)  // number of left/right brackets in example file

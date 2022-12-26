@@ -1,25 +1,36 @@
+/**
+ * Advent of Code 2022
+ * Day 20: Grove Positioning System
+ * https://adventofcode.com/2022/day/20
+ * By: E. Dronkert https://github.com/ednl
+ *
+ * Benchmark with the internal timer on a Mac Mini M1 using this Bash oneliner:
+ *   m=50000;for((i=0;i<10000;++i));do t=$(./a.out|tail -n1|awk '{print $2}');((t<m))&&m=$t&&echo $m;done
+ * gives a shortest runtime for my input file (not the example) of [TBD] µs.
+ * On a Raspberry Pi 4 with the CPU in performance mode: [TBD] µs.
+ *   echo performance | sudo tee /sys/devices/system/cpu/cpufreq/policy0/scaling_governor
+ *   /boot/config.txt: arm_boost=1, no overclock
+ */
+
 #include <stdio.h>
 
-static const int data[] = {1, 2, -3, 3, -2, 0, 4};
-static const int len = sizeof(data) / sizeof(*data), len1 = len - 1;
-static int pos[len], next[len], prev[len];
+#define EXAMPLE 1
+#if EXAMPLE == 1
+#define NAME "example20.txt"
+#else
+#define NAME "input20.txt"
+#endif
 
 int main(void)
 {
-    for (int i = 0; i < len; ++i) {
-        pos[i] = i;
-        next[i] = i + 1;
-        prev[i] = i - 1;
-    }
+    FILE* f = fopen(NAME, "r");
+    if (!f)
+        return 1;
 
-    for (int i = 0; i < len; ++i) {
-        int n = data[pos[i]];
-        if (n < 0)
-            n = (n % len1) + len1;
-        pos[i] = (pos[i] + n) % len;
-    }
+    fclose(f);
 
-    printf("-7 %% 4 = %d\n", -7 % 4);
+    int part1 = 0;
+    printf("Part 1: %d\n", part1);  // example=4-3+2=3, input=?
 
     return 0;
 }

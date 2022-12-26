@@ -1,7 +1,7 @@
 /**
  * Advent of Code 2022
- * Day 18: Boiling Boulders
- * https://adventofcode.com/2022/day/18
+ * Day 23: Unstable Diffusion
+ * https://adventofcode.com/2022/day/23
  * By: E. Dronkert https://github.com/ednl
  *
  * Benchmark with the internal timer on a Mac Mini M1 using this Bash oneliner:
@@ -16,9 +16,9 @@
 
 #define EXAMPLE 1
 #if EXAMPLE == 1
-#define NAME "example18.txt"
+#define NAME "example23.txt"
 #else
-#define NAME "input18.txt"
+#define NAME "input23.txt"
 #endif
 
 int main(void)
@@ -30,7 +30,7 @@ int main(void)
     fclose(f);
 
     int part1 = 0;
-    printf("Part 1: %d\n", part1);  // example=64, input=?
+    printf("Part 1: %d\n", part1);  // example=110, input=?
 
     return 0;
 }
