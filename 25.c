@@ -13,6 +13,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 
 #define EXAMPLE 1
 #if EXAMPLE == 1
@@ -26,10 +27,32 @@ int main(void)
     FILE* f = fopen(NAME, "r");
     if (!f)
         return 1;
-
+    int i = 0, c, buf[32];
+    int snafu[32] = {0};
+    while ((c = fgetc(f)) != -1) {
+        switch (c) {
+            case '=': c = -2; break;
+            case '-': c = -1; break;
+            case '0': c =  0; break;
+            case '1': c =  1; break;
+            case '2': c =  2; break;
+        }
+        if (c <= 2) {
+            buf[i++] = c;
+        } else {  // newline
+            int j = 0;
+            while (i) {
+                snafu[j++] += buf[--i];
+            }
+        }
+    }
     fclose(f);
-
-    int part1 = 0;  // sum of quality level (=ID * opened geodes in 24') of all blueprints
+    int part1 = 0, p = 1;
+    for (i = 0; i < 6; ++i) {
+        printf("%2d: %4d x %2d = %4d\n", i, p, snafu[i], snafu[i] * p);
+        part1 += snafu[i] * p;
+        p *= 5;
+    }
     printf("Part 1: %d\n", part1);  // example=2=-1=0 (4890), input=?
 
     return 0;

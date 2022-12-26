@@ -29,7 +29,7 @@ int main(void)
 
     fclose(f);
 
-    int part1 = 0;  // surface area of scanned lava droplet
+    int part1 = 0;
     printf("Part 1: %d\n", part1);  // example=64, input=?
 
     return 0;

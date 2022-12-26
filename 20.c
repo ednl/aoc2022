@@ -29,7 +29,7 @@ int main(void)
 
     fclose(f);
 
-    int part1 = 0;  // sum of quality level (=ID * opened geodes in 24') of all blueprints
+    int part1 = 0;
     printf("Part 1: %d\n", part1);  // example=4-3+2=3, input=?
 
     return 0;
