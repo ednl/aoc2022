@@ -1,8 +1,8 @@
 #include <stdio.h>
-#include <stdint.h>  // int8_t
+#include <stdint.h>
 #include <stdbool.h>
 
-#define EXAMPLE 0
+#define EXAMPLE 1
 #if EXAMPLE == 1
 #define NAME "example17.txt"
 #define JETS (40)  // number of left/right brackets in example file
@@ -18,6 +18,7 @@
 #define WIDTH  (7)    // chamber width (=playing field width)
 #define HEIGHT (4096) // chamber height (=playing field height)
 #define PART1  (2022) // number of rocks falling down in part 1
+#define PART2  (INT64_C(1000000000000)) // number of rocks falling down in part 2
 
 typedef struct {
     int mask[4];  // rock is max 4 rows high, mask[0] is leading edge when falling down
@@ -85,6 +86,9 @@ int main(void)
         if (++currock == ROCKS)
             currock = 0;
     }
-    printf("Part 1: %d\n", top);  // example=3068 input=3083
+    printf("Part 1: %d\n", top);  // example=3068, input=3083
+    int base = 20;
+    for (int i = 20)
+    // printf("Part 2: %d\n", top);  // example=1514285714288, input=?
     return 0;
 }
