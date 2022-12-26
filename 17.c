@@ -1,6 +1,23 @@
+/**
+ * Advent of Code 2022
+ * Day 17: Pyroclastic Flow
+ * https://adventofcode.com/2022/day/17
+ * By: E. Dronkert https://github.com/ednl
+ *
+ * Benchmark with the internal timer on a Mac Mini M1 using this Bash oneliner:
+ *   m=50000;for((i=0;i<10000;++i));do t=$(./a.out|tail -n1|awk '{print $2}');((t<m))&&m=$t&&echo $m;done
+ * gives a shortest runtime for my input file (not the example) of [TBD] µs.
+ * On a Raspberry Pi 4 with the CPU in performance mode: [TBD] µs.
+ *   echo performance | sudo tee /sys/devices/system/cpu/cpufreq/policy0/scaling_governor
+ *   /boot/config.txt: arm_boost=1, no overclock
+ */
+
 #include <stdio.h>
-#include <stdint.h>
+#include <string.h>    // memcpy
+#include <stdint.h>    // int8_t
+#include <inttypes.h>  // PRId64
 #include <stdbool.h>
+#include "startstoptimer.h"
 
 #define EXAMPLE 1
 #if EXAMPLE == 1
@@ -11,84 +28,223 @@
 #define JETS (10091)  // number of left/right brackets in input file
 #endif
 
-#define LEDGE  (1<<6) // left edge = last valid position on the left (chamber wall is at bit 7)
-#define REDGE  (1>>0) // right edge = last valid position on the right (chamber wall is at bit -1)
 #define JETAVG (('<' + '>')>>1)  // ord('<')=60, ord('>')=62, avg=61, '<'-61=-1 (go left), '>'-61=+1 (go right)
-#define ROCKS  (5)    // number of different falling rocks
-#define WIDTH  (7)    // chamber width (=playing field width)
-#define HEIGHT (4096) // chamber height (=playing field height)
-#define PART1  (2022) // number of rocks falling down in part 1
-#define PART2  (INT64_C(1000000000000)) // number of rocks falling down in part 2
+#define X0     (2)     // rocks start 2 from left wall
+#define Y0     (3)     // rocks start 3 up from highest rock already down
+#define RKNUM  (5)     // number of different falling rocks
+#define RKDIM  (4)     // rocks are 4x4
+#define CHAMW  (7)     // chamber width (=playing field width)
+#define CHAMH  (1024)  // chamber height (=playing field height)
+#define PART1  (2022)  // number of rocks falling down in part 1
+#define PART2  (INT64_C(1000000000000))  // number of rocks falling down in part 2
+
+#define MARGIN (16)              // safety margin from top
+#define MAXH   (CHAMH - MARGIN)  // threshold to start moving down 4096-16=4080
+#define REBASE (MAXH - 64)       // take as new base (floor) 4080-64=4016
+#define BLOCK  (CHAMH - REBASE)  // move lines down 4096-4016=80
 
 typedef struct {
-    int mask[4];  // rock is max 4 rows high, mask[0] is leading edge when falling down
+    int8_t row[RKDIM];  // rock is max 4 rows high, mask[0] is leading edge when falling down
+} Mask;
+
+typedef struct {
+    int id, n, w, h;   // id (0..RKNUM-1), number of masks (n=CHAMW-w+1), width, height
+    Mask mask[CHAMW];  // max 7 different shifted masks
 } Rock;
 
-static const Rock rock[ROCKS][WIDTH] = {
-    {{0170},{0074},{0036},{0017}},
-    {{0040,0160,0040},{0020,0070,0020},{0010,0034,0010},{0004,0016,0004},{0002,0007,0002}},
-    {{0160,0020,0020},{0070,0010,0010},{0034,0004,0004},{0016,0002,0002},{0007,0001,0001}},
-    {{0100,0100,0100,0100},{0040,0040,0040,0040},{0020,0020,0020,0020},{0010,0010,0010,0010},{0004,0004,0004,0004},{0002,0002,0002,0002},{0001,0001,0001,0001}},
-    {{0140,0140},{0060,0060},{0030,0030},{0014,0014},{0006,0006},{0003,0003}},
+typedef struct {
+    int64_t dropped, top;
+    int rockindex, jetindex;
+} State;
+
+// Rock shapes as defined by puzzle, but leading edge first (so, "upside down")
+static const char* shape[] = {
+    ("####"),
+    (".#.."
+     "###."
+     ".#.."),
+    ("###."
+     "..#."
+     "..#."),
+    ("#..."
+     "#..."
+     "#..."
+     "#..."),
+    ("##.."
+     "##..")
 };
-static const int rockpos[ROCKS] = {4, 5, 5, 7, 6};  // different L/R positions of rock in chamber
-static const int rocksize[ROCKS] = {1, 3, 3, 4, 2};  // rock height
 
-static int chamber[HEIGHT];
-static int jet[JETS];
-static int tall[WIDTH];  // rock column height
+static Rock rock[RKNUM];
+static int8_t jet[JETS];
+static int8_t chamber[CHAMH];
+static int64_t top, base;
+static State state[8192];
 
-static bool isfree(const int r, const int x, const int y)
+static Rock str2rock(const char* const s, const int id)
 {
-    for (int i = 0; i < rocksize[r]; ++i)
-        if (chamber[y + i] & rock[r][x].mask[i])
+    Rock rk = {.id=id};
+    const char* pc = s;
+    int r = 0, c = 0, bits = 0;
+    while (*pc != '\0' && r < RKDIM) {
+        bits <<= 1;
+        if (*pc == '#') {
+            bits |= 1;
+            if (c == rk.w)
+                ++rk.w;  // width = max col+1 where bit=1
+        }
+        if (++c == RKDIM) {
+            rk.mask[0].row[r++] = (int8_t)(bits << (CHAMW - RKDIM));  // shift against left wall
+            c = bits = 0;
+        }
+        ++pc;
+    }
+    if (c && bits && r < RKDIM)  // catch malformed rockshape[]
+        rk.mask[0].row[r++] = (int8_t)(bits << (CHAMW - RKDIM));
+    rk.h = r;  // height = number of rows
+    rk.n = CHAMW - rk.w + 1;  // number of possible shifts L/R in the chamber
+    for (int i = 1; i < rk.n; ++i)
+        for (int j = 0; j < rk.h; ++j)
+            rk.mask[i].row[j] = rk.mask[i - 1].row[j] >> 1;  // other masks are each shifted 1 to the right
+    return rk;
+}
+
+static int makerocks(void)
+{
+    int i = 0;
+    while (i < RKNUM && i < (int)(sizeof(shape) / sizeof(*shape))) {
+        rock[i] = str2rock(shape[i], i);
+#if EXAMPLE == 1
+        printf("id=%d n=%d w=%d h=%d\n", rock[i].id, rock[i].n, rock[i].w, rock[i].h);
+        for (int r = 0; r < rock[i].h; ++r) {
+            for (int n = 0; n < rock[i].n; ++n) {
+                printf(" ");
+                for (int8_t bit = (int8_t)(1 << (CHAMW - 1)); bit; bit >>= 1)
+                    printf("%c", rock[i].mask[n].row[r] & bit ? '#' : '.');
+            }
+            printf("\n");
+        }
+        printf("\n");
+#endif
+        ++i;
+    }
+    return i;
+}
+
+static int read(const char* const s)
+{
+    FILE* f = fopen(s, "r");
+    if (!f)
+        return 0;
+    int i = 0, c;
+    while (i < JETS && (c = fgetc(f)) != EOF)
+        if (c == '<' || c == '>')
+            jet[i++] = (int8_t)(c - JETAVG);  // '<'=-1, '>'=+1
+    fclose(f);
+    return i;
+}
+
+#if EXAMPLE == 1
+static void showline(const int64_t y)
+{
+    printf("|");
+    for (int8_t bit = (int8_t)(1 << (CHAMW - 1)); bit; bit >>= 1)
+        printf("%c", chamber[y - base] & bit ? '#' : '.');
+    printf("|");
+}
+
+static void show(const int64_t first, int64_t last)
+{
+    if (first < last || last < 0)
+        return;
+    showline(first);
+    printf(" y=%"PRId64"\n", first);
+    for (int64_t y = first - 1; y >= last + 1; --y) {
+        showline(y);
+        printf("\n");
+    }
+    if (last != first) {
+        showline(last);
+        printf(" y=%"PRId64"\n", last);
+    }
+    if (last == base)
+        printf("+-------+\n");
+}
+#endif
+
+static void settle(const Rock* const r, const int x, const int64_t y)
+{
+    int64_t h = y - base;
+    for (int i = 0; i < r->h; ++i)
+        chamber[h++] |= r->mask[x].row[i];
+    h += base;
+    if (h > top)
+        top = h;
+}
+
+static bool isfree(const Rock* const r, const int x, const int64_t y)
+{
+    if (!r || x < 0 || x >= r->n)
+        return false;
+    int64_t h = y - base;
+    if (h < 0 || h > CHAMH - r->h)
+        return false;
+    for (int i = 0; i < r->h; ++i)
+        if (chamber[h++] & r->mask[x].row[i])
             return false;
     return true;
 }
 
-static void show(const int h)
-{
-    printf("+-------+\n");
-    for (int i = 0; i <= h; ++i) {
-        printf("|");
-        for (int bit = LEDGE; bit; bit >>= 1)
-            printf("%c", chamber[i] & bit ? '#' : '.');
-        printf("|\n");
-    }
-    printf("\n");
-}
-
 int main(void)
 {
-    FILE* f = fopen(NAME, "r");
-    for (int i = 0; i < JETS; ++i)
-        jet[i] = fgetc(f) - JETAVG;  // -1 or +1
-    fclose(f);
+    starttimer();
+    int rocks = makerocks();
+    int jets = read(NAME);
 
-    int currock = 0, curjet = 0, top = 0;
-    for (int rocks = 0; rocks < PART1 && top < HEIGHT; ++rocks) {
-        int x = 2, y = top + 3;
-        bool move = true;
-        while (move) {
-            int t = x + jet[curjet];
-            if (++curjet == JETS)
-                curjet = 0;
-            if (t >= 0 && t < rockpos[currock] && isfree(currock, t, y))
-                x = t;
-            t = y - 1;
-            if ((move = t >= 0 && isfree(currock, x, t)))
-                y = t;
+#if EXAMPLE == 1
+    printf("rocks=%d jets=%d\n\n", rocks, jets);
+#endif
+
+    int rockindex = 0, jetindex = 0;
+    int64_t dropped = 0;
+    for (; dropped < PART1; ++dropped) {
+        const Rock* const r = rock + rockindex;
+        int x = X0 + jet[jetindex];  // first move always possible
+        if (++jetindex == jets)
+            jetindex = 0;
+        for (int i = 0; i < Y0; ++i) {  // empty chamber down to previous highest
+            int x1 = x + jet[jetindex];
+            if (++jetindex == jets)
+                jetindex = 0;
+            if (x1 >= 0 && x1 < r->n)
+                x = x1;
         }
-        for (int i = 0; i < rocksize[currock]; ++i)
-            chamber[y++] |= rock[currock][x].mask[i];
-        if (y > top)
-            top = y;
-        if (++currock == ROCKS)
-            currock = 0;
+        int64_t y = top;  // margin of 3 already skipped
+        bool moving = true;
+        while (moving) {
+            int64_t y1 = y - 1;
+            if ((moving = isfree(r, x, y1))) {  // last move was shift, so now drop
+                y = y1;
+                int x1 = x + jet[jetindex];  // only shift if drop successful
+                if (++jetindex == jets)
+                    jetindex = 0;
+                if (isfree(r, x1, y))
+                    x = x1;
+            }
+        }
+        settle(r, x, y);
+        if (top - base > MAXH) {
+            memcpy(chamber, chamber + REBASE, BLOCK);
+            memset(chamber + BLOCK, 0, REBASE);
+            base += REBASE;
+        }
+        if (++rockindex == rocks)
+            rockindex = 0;
+#if EXAMPLE == 1
+        if (dropped < 10)
+            show(top, base);
+#endif
     }
-    printf("Part 1: %d\n", top);  // example=3068, input=3083
-    int base = 20;
-    for (int i = 20)
-    // printf("Part 2: %d\n", top);  // example=1514285714288, input=?
+    printf("Part 1: %"PRId64"\n", top);  // example=3068 input=3083
+    printf("Time: %.0f us\n", stoptimer_us());
     return 0;
 }
