@@ -1,7 +1,7 @@
 /**
  * Advent of Code 2022
- * Day 18: Boiling Boulders
- * https://adventofcode.com/2022/day/18
+ * Day 25: Full of Hot Air
+ * https://adventofcode.com/2022/day/25
  * By: E. Dronkert https://github.com/ednl
  *
  * Benchmark with the internal timer on a Mac Mini M1 using this Bash oneliner:
@@ -16,9 +16,9 @@
 
 #define EXAMPLE 1
 #if EXAMPLE == 1
-#define NAME "example18.txt"
+#define NAME "example25.txt"
 #else
-#define NAME "input18.txt"
+#define NAME "input25.txt"
 #endif
 
 int main(void)
@@ -29,8 +29,8 @@ int main(void)
 
     fclose(f);
 
-    int part1 = 0;  // surface area of scanned lava droplet
-    printf("Part 1: %d\n", part1);  // example=64, input=?
+    int part1 = 0;  // sum of quality level (=ID * opened geodes in 24') of all blueprints
+    printf("Part 1: %d\n", part1);  // example=2=-1=0 (4890), input=?
 
     return 0;
 }
