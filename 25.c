@@ -6,30 +6,32 @@
  *
  * Benchmark with the internal timer on a Mac Mini M1 using this Bash oneliner:
  *   m=50000;for((i=0;i<10000;++i));do t=$(./a.out|tail -n1|awk '{print $2}');((t<m))&&m=$t&&echo $m;done
- * gives a shortest runtime for my input file (not the example) of [TBD] µs.
+ * gives a shortest runtime for my input file (not the example) of 41 µs.
  * On a Raspberry Pi 4 with the CPU in performance mode: [TBD] µs.
  *   echo performance | sudo tee /sys/devices/system/cpu/cpufreq/policy0/scaling_governor
  *   /boot/config.txt: arm_boost=1, no overclock
  */
 
 #include <stdio.h>
-#include <string.h>
+#include "startstoptimer.h"
 
-#define EXAMPLE 1
+#define EXAMPLE 0
 #if EXAMPLE == 1
 #define NAME "example25.txt"
+#define N (8)
 #else
 #define NAME "input25.txt"
+#define N (32)
 #endif
 
 int main(void)
 {
+    starttimer();
     FILE* f = fopen(NAME, "r");
     if (!f)
         return 1;
-    int i = 0, c, buf[32];
-    int snafu[32] = {0};
-    while ((c = fgetc(f)) != -1) {
+    int len = 0, i = 0, j, c, buf[N], snafu[N] = {0};
+    while ((c = fgetc(f)) != -1 && len <= N) {
         switch (c) {
             case '=': c = -2; break;
             case '-': c = -1; break;
@@ -37,23 +39,45 @@ int main(void)
             case '1': c =  1; break;
             case '2': c =  2; break;
         }
-        if (c <= 2) {
+        if (c <= 2 && i < N) {  // next digit in snafu number
             buf[i++] = c;
-        } else {  // newline
-            int j = 0;
-            while (i) {
-                snafu[j++] += buf[--i];
-            }
+            if (i > len)
+                len = i;
+        } else {  // newline or overflow
+            j = 0;
+            while (i)
+                snafu[j++] += buf[--i];  // add digits to snafu sum
         }
     }
     fclose(f);
-    int part1 = 0, p = 1;
-    for (i = 0; i < 6; ++i) {
-        printf("%2d: %4d x %2d = %4d\n", i, p, snafu[i], snafu[i] * p);
-        part1 += snafu[i] * p;
-        p *= 5;
-    }
-    printf("Part 1: %d\n", part1);  // example=2=-1=0 (4890), input=?
 
+    i = 0;
+    j = 1;
+    while (i < len) {
+        if (j == len && (snafu[i] > 2 || snafu[i] < -2))
+            ++len;
+        while (snafu[i] > 2) {
+            snafu[i] -= 5;
+            ++snafu[j];
+        }
+        while (snafu[i] < -2) {
+            snafu[i] += 5;
+            --snafu[j];
+        }
+        ++i;
+        ++j;
+    }
+
+    printf("Part 1: ");  // example="2=-1=0" (4890), input="2-=2-0=-0-=0200=--21"
+    for (i = len - 1; i >= 0; --i)
+        switch (snafu[i]) {
+            case -2: printf("="); break;
+            case -1: printf("-"); break;
+            case  0: printf("0"); break;
+            case  1: printf("1"); break;
+            case  2: printf("2"); break;
+        }
+    printf("\n");
+    printf("Time: %.0f us\n", stoptimer_us());
     return 0;
 }
