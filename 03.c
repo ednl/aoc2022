@@ -42,7 +42,7 @@ static int firstitem(uint64_t index)
 
 int main(void)
 {
-    FILE *f = fopen("input03.txt", "r");
+    FILE *f = fopen("aocinput/2022-03-input.txt", "r");
     char *buf = NULL;
     size_t bufsz;
     ssize_t len;

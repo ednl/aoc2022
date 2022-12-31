@@ -193,7 +193,7 @@ int main(void)
 
 #if !EXAMPLE
     // Read input file
-    FILE *f = fopen("input09.txt", "r");
+    FILE *f = fopen("aocinput/2022-09-input.txt", "r");
     if (!f)
         return 1;
     for (int i = 0; i < N && !feof(f); ++i)

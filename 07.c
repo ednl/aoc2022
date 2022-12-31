@@ -66,7 +66,7 @@ static size_t calc(FSNode * node)
 
 int main(void)
 {
-    FILE *f = fopen("input07.txt", "r");
+    FILE *f = fopen("aocinput/2022-07-input.txt", "r");
     if (!f)
         return 1;
 

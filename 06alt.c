@@ -24,7 +24,7 @@ static int find(const int len)
 
 int main(void)
 {
-    FILE *f = fopen("input06.txt", "r");
+    FILE *f = fopen("aocinput/2022-06-input.txt", "r");
     fgets(signal, sizeof signal, f);
     fclose(f);
     printf("%d\n%d\n", find(4), find(14));  // 1542 3153

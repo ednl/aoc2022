@@ -21,7 +21,7 @@ int main(void)
 {
     char buf[5];
     int s = 0, t = 0;
-    FILE *f = fopen("input02.txt", "r");
+    FILE *f = fopen("aocinput/2022-02-input.txt", "r");
     while (fgets(buf, sizeof buf, f) != NULL)
         switch (buf[0] << 8 | buf[2]) {
             case AX: s += 1+3; t += 3+0; break;  // 1: AA = draw, 2: AC = loss

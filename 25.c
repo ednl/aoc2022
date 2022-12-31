@@ -17,10 +17,10 @@
 
 #define EXAMPLE 0
 #if EXAMPLE == 1
-#define NAME "example25.txt"
+#define NAME "aocinput/2022-25-example.txt"
 #define N (8)
 #else
-#define NAME "input25.txt"
+#define NAME "aocinput/2022-25-input.txt"
 #define N (32)
 #endif
 

@@ -26,7 +26,7 @@ static void look(int x0, int y0, int dx, int dy)
 int main(void)
 {
     starttimer();
-    FILE *f = fopen("input08.txt", "r");
+    FILE *f = fopen("aocinput/2022-08-input.txt", "r");
     for (int i = 0; i < N; ++i) {
         for (int j = 0; j < N; ++j)
             tree[i][j] = (char)(fgetc(f));

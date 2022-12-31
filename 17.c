@@ -21,10 +21,10 @@
 
 #define EXAMPLE 1
 #if EXAMPLE == 1
-#define NAME "example17.txt"
+#define NAME "aocinput/2022-17-example.txt"
 #define JETS (40)  // number of left/right brackets in example file
 #else
-#define NAME "input17.txt"
+#define NAME "aocinput/2022-17-input.txt"
 #define JETS (10091)  // number of left/right brackets in input file
 #endif
 

@@ -25,7 +25,7 @@ static struct Move {
 // Read input file, return number of crate moving instructions
 static int read(void)
 {
-    FILE *f = fopen("input05.txt", "r");
+    FILE *f = fopen("aocinput/2022-05-input.txt", "r");
     // Read initial configuration
     for (int i = 0; i < LINECOUNT; ++i)
         fgets(ini[i], LINEWIDTH, f);

@@ -15,7 +15,7 @@
 int main(void)
 {
     starttimer();
-    FILE *f = fopen("input10.txt", "r");          // or: example10.txt
+    FILE *f = fopen("aocinput/2022-10-input.txt", "r");          // or: example10.txt
     char buf[5];                                  // opcodes and operands are length <= 4, +\0
     int clock = 0, regX = 1, sigsum = 0, beam;    // beam = horizontal position
     while (fscanf(f, "%4s ", buf) == 1) {         // 1 clock tick for every word (so, 2 for addx)

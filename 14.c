@@ -20,10 +20,10 @@
 
 #define EXAMPLE 0
 #if EXAMPLE
-#define NAME "example14.txt"
+#define NAME "aocinput/2022-14-example.txt"
 #define GROW (8)  // example: min.x=494->489, max.x=503->511, so step=8 means 1x grow left + 1x grow right
 #else
-#define NAME "input14.txt"
+#define NAME "aocinput/2022-14-input.txt"
 #define GROW (162)  // input: min.x=492->330, max.x=602->670, so step=162 means 1x grow left + 1x grow right
 #endif
 

@@ -11,7 +11,7 @@
 int main(void)
 {
     int a, b, c, d, part1 = 0, part2 = 0;
-    FILE *f = fopen("input04.txt", "r");
+    FILE *f = fopen("aocinput/2022-04-input.txt", "r");
     while (fscanf(f, "%d-%d,%d-%d", &a, &b, &c, &d) == 4)
         if (a <= d && b >= c) {
             ++part2;
