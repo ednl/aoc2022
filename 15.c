@@ -21,12 +21,12 @@
 
 #define EXAMPLE 0
 #if EXAMPLE == 1
-#define NAME "example15.txt"
+#define NAME "aocinput/2022-15-example.txt"
 #define N (14)   // number of sensors in example file
 #define Y (10)   // horizontal line of interest in example
 #define M (20)   // max x or y value for part 2
 #else
-#define NAME "input15.txt"
+#define NAME "aocinput/2022-15-input.txt"
 #define N (38)       // number of sensors in input file
 #define Y (2000000)  // horizontal line of interest in input
 #define M (4000000)  // max x or y value for part 2

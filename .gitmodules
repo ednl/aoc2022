@@ -1,0 +1,3 @@
+[submodule "aocinput"]
+	path = aocinput
+	url = git@github.com:ednl/aocinput.git

@@ -16,7 +16,7 @@ static int input(char **buf)
     size_t bufsz;
     ssize_t len;
     if (isatty(fileno(stdin))) {
-        FILE *f = fopen("input06.txt", "r");
+        FILE *f = fopen("aocinput/2022-06-input.txt", "r");
         if (!f)
             return 0;
         len = getline(buf, &bufsz, f);

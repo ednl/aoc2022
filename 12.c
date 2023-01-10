@@ -11,11 +11,11 @@
 
 #define EXAMPLE 0
 #if EXAMPLE == 1
-#define NAME "example12.txt"
+#define NAME "aocinput/2022-12-example.txt"
 #define ROWS (5)  // lines in example file
 #define COLS (8)  // line width in example file
 #else
-#define NAME "input12.txt"
+#define NAME "aocinput/2022-12-input.txt"
 #define ROWS  (41)   // lines in input file
 #define COLS  (159)  // line width in input file
 #endif

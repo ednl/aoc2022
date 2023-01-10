@@ -183,13 +183,13 @@ static int64_t play(int rounds)
 int main(void)
 {
     printf("---------- EXAMPLE ----------\n");
-    read("example11.txt");
+    read("aocinput/2022-11-example.txt");
     printf("Part 1: %"PRId64"\n", play(20));     // 10605
     printf("Part 2: %"PRId64"\n", play(10000));  // 2713310158
 
     starttimer();
     printf("\n---------- INPUT FILE ----------\n");
-    read("input11.txt");
+    read("aocinput/2022-11-input.txt");
     printf("Part 1: %"PRId64"\n", play(20));     // 118674
     printf("Part 2: %"PRId64"\n", play(10000));  // 32333418600
     printf("Time: %.2f ms\n", stoptimer_ms());

@@ -16,9 +16,9 @@
 
 #define EXAMPLE 1
 #if EXAMPLE == 1
-#define NAME "example18.txt"
+#define NAME "aocinput/2022-18-example.txt"
 #else
-#define NAME "input18.txt"
+#define NAME "aocinput/2022-18-input.txt"
 #endif
 
 int main(void)

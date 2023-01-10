@@ -14,7 +14,7 @@ int main(void)
     int top[3] = {0};  // top 3 elves with most calories
     char *buf = NULL;
     size_t bufsz;
-    FILE *f = fopen("input01.txt", "r");
+    FILE *f = fopen("aocinput/2022-01-input.txt", "r");
     while (!feof(f))  // extra loop after last line to process last elf
         if (getline(&buf, &bufsz, f) > 1)  // number on line?
             calories += atoi(buf);

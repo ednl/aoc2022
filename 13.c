@@ -20,10 +20,10 @@
 
 #define EXAMPLE 0
 #if EXAMPLE == 1
-#define NAME "example13.txt"
+#define NAME "aocinput/2022-13-example.txt"
 #define N (16)  // 16 packets in example file
 #else
-#define NAME "input13.txt"
+#define NAME "aocinput/2022-13-input.txt"
 #define N (300)  // 300 packets in input file
 #endif
 

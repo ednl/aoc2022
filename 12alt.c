@@ -9,7 +9,7 @@
 #include <stdbool.h>  // bool
 #include "startstoptimer.h"
 
-#define NAME "input12.txt"
+#define NAME "aocinput/2022-12-input.txt"
 #define ROWS  (41)   // lines in input file
 #define COLS  (159)  // line width in input file
 #define QSIZE (ROWS * COLS)
